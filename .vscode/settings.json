@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.erd": "json",
+        "*.vuerd": "json",
+        ".fantomasignore": "ignore",
+        "dynamic_allocator.h": "c"
+    }
+}
