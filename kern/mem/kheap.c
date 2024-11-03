@@ -37,11 +37,31 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 
     initialize_dynamic_allocator(start,initSizeToAllocate);
     return 0;
-
 }
-
+//TODO: [PROJECT'24.MS2 - #02] [1] KERNEL HEAP - sbrk
+// Write your code here, remove the panic and write your code
 void* sbrk(int numOfPages)
 {
+	struct FrameInfo *ptr_frame_info;
+
+    if (numOfPages>0){
+		uint32 size =numOfPages*PAGE_SIZE;
+		if ((size+segment_break)<= hard_limit){
+			for (uint32 i=segment_break; i<=size+segment_break; i+=PAGE_SIZE){
+				allocate_frame(&ptr_frame_info);
+			 map_frame(ptr_page_directory,ptr_frame_info,i, PERM_WRITEABLE | PERM_PRESENT);
+			}
+			uint32 tempBrk=segment_break;
+			segment_break+=size;
+			return tempBrk;
+		}
+		else
+			return -1;
+	}
+	else if (numOfPages ==0)
+				return segment_break;
+	else
+		return -1;
 	/* numOfPages > 0: move the segment break of the kernel to increase the size of its heap by the given numOfPages,
 	 * 				you should allocate pages and map them into the kernel virtual address space,
 	 * 				and returns the address of the previous break (i.e. the beginning of newly mapped memory).
@@ -53,12 +73,11 @@ void* sbrk(int numOfPages)
 	 */
 
 	//MS2: COMMENT THIS LINE BEFORE START CODING==========
-	panic("sbrk() is not implemented yet...!!");
-	return (void*)-1 ;
+	//panic("sbrk() is not implemented yet...!!");
+	//return (void*)-1 ;
 	//====================================================
 
-	//TODO: [PROJECT'24.MS2 - #02] [1] KERNEL HEAP - sbrk
-	// Write your code here, remove the panic and write your code
+
 }
 
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
