@@ -131,6 +131,7 @@ void makelSB0(uint32 *header,uint32 totalSize){
 
 }
 
+
 void set_block_data(void* va, uint32 totalSize, bool isAllocated)
 {
 	//TODO: [PROJECT'24.MS1 - #05] [3] DYNAMIC ALLOCATOR - set_block_data
@@ -172,6 +173,7 @@ void *alloc_block_FF(uint32 size)
 	//==================================================================================
 
 	//TODO: [PROJECT'24.MS1 - #06] [3] DYNAMIC ALLOCATOR - alloc_block_FF
+
 	if(!size)
 		return NULL;
 	size+= 8;
@@ -179,13 +181,46 @@ void *alloc_block_FF(uint32 size)
 	if(size < 16){
 		size = 16;
 	}
+	if(!LIST_SIZE(&freeBlocksList)){
+		void* address = sbrk((ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE);
+		if(address == (void*)-1)
+			return NULL;
+		uint32* newEndBlock = (uint32*)(address + (ROUNDUP(size,PAGE_SIZE)) - 4);
+		*newEndBlock = 0 | 1;
+		uint32* header = (uint32*)(address - 4);
+		uint32* footer = (uint32*)(address + (ROUNDUP(size,PAGE_SIZE)) - 8);
+		*header = (ROUNDUP(size,PAGE_SIZE)) & ~(0x1);
+		*footer = (ROUNDUP(size,PAGE_SIZE)) & ~(0x1);
+		LIST_INSERT_HEAD(&freeBlocksList,(struct BlockElement*) address);
+	}
+
 	struct BlockElement *freeBlk;
 	LIST_FOREACH(freeBlk,&freeBlocksList){
 		uint32 blkSize = get_block_size(freeBlk);
 		if(size > blkSize){
 			if(!(LIST_NEXT(freeBlk))){
-				sbrk(1);
-				return NULL;
+
+				void* address = sbrk((ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE);
+				if(address == (void*)-1)
+					return NULL;
+				uint32 prevBlockSize = (*((uint32*)(address - 8))) & ~(0x1);
+				void* prevBlock = address - prevBlockSize;
+				uint32* footer = (uint32*)(address + (ROUNDUP(size,PAGE_SIZE)) - 8);
+				uint32* prevBlockHeader = (uint32*)(address - prevBlockSize - 4);
+				uint32* newEndBlock = (uint32*)(address + (ROUNDUP(size,PAGE_SIZE)) - 4);
+				*newEndBlock = 0 | 1;
+				*((uint32*)(address - 4)) = 0;
+				if(is_free_block(prevBlock)){
+					*prevBlockHeader = (prevBlockSize + ((ROUNDUP(size,PAGE_SIZE)) & ~(0x1)));
+					*footer = (prevBlockSize + ((ROUNDUP(size,PAGE_SIZE)) & ~(0x1)));
+					return alloc_block_FF(size-8);
+					//OPTIMIZE THIS SHIT
+				}
+				uint32* header = (uint32*)(address - 4);
+				*header = (ROUNDUP(size,PAGE_SIZE)) & (0x1);
+				*footer = (ROUNDUP(size,PAGE_SIZE)) & (0x1);
+
+				continue;
 			} else
 				continue;
 		}
@@ -203,6 +238,8 @@ void *alloc_block_FF(uint32 size)
 				return freeBlk;
 			}
 	}
+
+
 
 	return NULL;
 

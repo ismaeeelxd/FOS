@@ -10,8 +10,6 @@
 #define DYN_ALLOC_MAX_BLOCK_SIZE (1<<11) 	//2 KB
 #define DYN_ALLOC_MIN_BLOCK_SIZE (1<<3) 	//8 BYTE
 
-#define sizeOfMetaData (8)
-
 
 /*Implementation Type of List*/
 #define IMPLICIT_LIST 1

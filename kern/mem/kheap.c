@@ -19,8 +19,6 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
     segment_break=daStart+initSizeToAllocate;
     hard_limit=daLimit;
     struct FrameInfo *ptr_frame_info;
-    cprintf("Start address : %p \n",start);
-    cprintf("hard limit address : %p \n",hard_limit);
 
     if (initSizeToAllocate>daLimit-daStart)
     {
@@ -30,7 +28,7 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
     for (uint32 current_page=daStart;current_page<segment_break;current_page+=PAGE_SIZE)
     {
 
-//        create_page_table(&ptr_page_directory, current_page);
+       // create_page_table(&ptr_page_directory, current_page);
         allocate_frame(&ptr_frame_info);
         map_frame(ptr_page_directory,ptr_frame_info,current_page, PERM_WRITEABLE | PERM_PRESENT);
     }
@@ -42,26 +40,26 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 // Write your code here, remove the panic and write your code
 void* sbrk(int numOfPages)
 {
-	struct FrameInfo *ptr_frame_info;
 
     if (numOfPages>0){
 		uint32 size =numOfPages*PAGE_SIZE;
 		if ((size+segment_break)<= hard_limit){
-			for (uint32 i=segment_break; i<=size+segment_break; i+=PAGE_SIZE){
+			for (uint32 i=segment_break; i<size+segment_break; i+=PAGE_SIZE){
+				struct FrameInfo *ptr_frame_info = NULL;
 				allocate_frame(&ptr_frame_info);
-			 map_frame(ptr_page_directory,ptr_frame_info,i, PERM_WRITEABLE | PERM_PRESENT);
+				map_frame(ptr_page_directory,ptr_frame_info,i, PERM_WRITEABLE | PERM_PRESENT);
 			}
 			uint32 tempBrk=segment_break;
 			segment_break+=size;
-			return tempBrk;
+			return (void*)tempBrk;
 		}
 		else
-			return -1;
+			return (void*)-1;
 	}
 	else if (numOfPages ==0)
-				return segment_break;
+				return (void*)segment_break;
 	else
-		return -1;
+		return (void*)-1;
 	/* numOfPages > 0: move the segment break of the kernel to increase the size of its heap by the given numOfPages,
 	 * 				you should allocate pages and map them into the kernel virtual address space,
 	 * 				and returns the address of the previous break (i.e. the beginning of newly mapped memory).
@@ -74,7 +72,7 @@ void* sbrk(int numOfPages)
 
 	//MS2: COMMENT THIS LINE BEFORE START CODING==========
 	//panic("sbrk() is not implemented yet...!!");
-	//return (void*)-1 ;
+		return (void*)-1 ;
 	//====================================================
 
 
@@ -119,7 +117,7 @@ void* kmalloc(unsigned int size)
 		int cnt =0;
 		int firstPageAlloc = -1;
 	    while(numPagesNeeded){
-	    	struct FrameInfo* frameToBeAlloc;
+	    	struct FrameInfo* frameToBeAlloc = NULL;
 	    	uint32* ptr_page = NULL;
 	    	if(!get_frame_info(ptr_page_directory,start+PAGE_SIZE*cnt,&ptr_page)){
 	    		allocate_frame(&frameToBeAlloc);
@@ -131,6 +129,7 @@ void* kmalloc(unsigned int size)
 	    	}
 	    	++cnt;
 	    }
+
 	    return (void*)(firstPageAlloc);
 }
 
@@ -145,17 +144,35 @@ void kfree(void* virtual_address)
 
 }
 
-unsigned int kheap_physical_address(unsigned int virtual_address)
-{
+
+unsigned int kheap_physical_address(unsigned int virtual_address) {
 	//TODO: [PROJECT'24.MS2 - #05] [1] KERNEL HEAP - kheap_physical_address
-	// Write your code here, remove the panic and write your code
-	panic("kheap_physical_address() is not implemented yet...!!");
 
-	//return the physical address corresponding to given virtual_address
-	//refer to the project presentation and documentation for details
+    uint32* page_table;
+    struct FrameInfo* frame_info;
 
-	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
+
+    get_page_table(ptr_page_directory, virtual_address, &page_table);
+
+    if (page_table == NULL) return 0;
+
+    uint32 frame_no = (page_table)[PTX(virtual_address)];
+
+
+//    if (frame_info == NULL) return 0; .. Find another way to check on the frame_no
+
+
+    // EQUATION COULD BE WRONG
+    /*
+     * For physical to virtual
+     * fi akher el kmalloc call kvirtual to kphysical
+     * w ely hyrg3 nhutu index le array
+     */
+    uint32 physical_address = (frame_no << 12) | (virtual_address & 0xFFF);
+    return physical_address;
 }
+
+
 
 unsigned int kheap_virtual_address(unsigned int physical_address)
 {
