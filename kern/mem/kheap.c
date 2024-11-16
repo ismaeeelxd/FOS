@@ -1,5 +1,4 @@
 #include "kheap.h"
-
 #include <inc/memlayout.h>
 #include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
@@ -77,7 +76,7 @@ void* sbrk(int numOfPages)
 
 
 }
-
+int arr[1024] = {0};
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
 
 void* kmalloc(unsigned int size)
@@ -91,7 +90,7 @@ void* kmalloc(unsigned int size)
 	        return alloc_block_FF(size);
 	     }
 
-	    int numPagesNeeded=ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE;
+	    int numPagesNeeded=ROUNDUP((uint32)size,PAGE_SIZE)/PAGE_SIZE;
 
 	    uint32 start= hard_limit + PAGE_SIZE;
 
@@ -100,91 +99,168 @@ void* kmalloc(unsigned int size)
 		}
 
 		int numFreePages =0;
-		for(int i = start;i<KERNEL_HEAP_MAX;i+=PAGE_SIZE){
+		uint32 firstpage_alloced=0;
+		for(uint32 i = start;i<KERNEL_HEAP_MAX;i+=PAGE_SIZE){
 			uint32* ptr_page = NULL;
 			if(!get_frame_info(ptr_page_directory,i,&ptr_page)){
+					if(numFreePages==0)
+						firstpage_alloced=i;
 				numFreePages++;
 				if(numFreePages == numPagesNeeded){
 					break;
 				}
+			}else{
+
+				 numFreePages =0;
+				 firstpage_alloced=0;
 			}
 		}
 
 		if( numFreePages < numPagesNeeded){
 			return NULL;
 		}
+		if(numPagesNeeded > LIST_SIZE(&MemFrameLists.free_frame_list))
+			{
+				return NULL;
+			}
 
 		int cnt =0;
-		int firstPageAlloc = -1;
 	    while(numPagesNeeded){
+			uint32* ptr_page = NULL;
 	    	struct FrameInfo* frameToBeAlloc = NULL;
-	    	uint32* ptr_page = NULL;
-	    	if(!get_frame_info(ptr_page_directory,start+PAGE_SIZE*cnt,&ptr_page)){
+	    	if(!get_frame_info(ptr_page_directory,firstpage_alloced+PAGE_SIZE*cnt,&ptr_page)){
 	    		allocate_frame(&frameToBeAlloc);
-	    		map_frame(ptr_page_directory,frameToBeAlloc,start+PAGE_SIZE*cnt, PERM_WRITEABLE | PERM_PRESENT);
-	    		if(ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE == numPagesNeeded){
-	    			firstPageAlloc = start+PAGE_SIZE*cnt;
-	    		}
+	    		map_frame(ptr_page_directory,frameToBeAlloc,firstpage_alloced+(PAGE_SIZE*cnt), PERM_WRITEABLE | PERM_PRESENT);
+	    		frameToBeAlloc->vir_add=(uint32)(firstpage_alloced+(PAGE_SIZE*cnt));
+
+	    		if(ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE == numPagesNeeded)
+	    			arr[(firstpage_alloced-KERNEL_HEAP_START)/PAGE_SIZE]=numPagesNeeded;
+
 	    		numPagesNeeded--;
 	    	}
 	    	++cnt;
-	    }
 
-	    return (void*)(firstPageAlloc);
+	    }
+		if(firstpage_alloced==0){
+			return NULL;
+		}
+	   	    return (void*)(firstpage_alloced);
+
 }
 
 void kfree(void* virtual_address)
 {
 	//TODO: [PROJECT'24.MS2 - #04] [1] KERNEL HEAP - kfree
-	// Write your code here, remove the panic and write your code
-	panic("kfree() is not implemented yet...!!");
 
+	uint32 add=(uint32)virtual_address;
 	//you need to get the size of the given allocation using its address
 	//refer to the project presentation and documentation for details
+	if(add <KERNEL_HEAP_MAX&&add>=hard_limit+PAGE_SIZE){
+		add=ROUNDDOWN(add,PAGE_SIZE);
+
+		for(int i=0 ;i<arr[(add-KERNEL_HEAP_START)/PAGE_SIZE];i++){
+			uint32 pa=kheap_physical_address((uint32)virtual_address);
+			 struct FrameInfo* frame_info=	to_frame_info(pa);
+
+			unmap_frame(ptr_page_directory,add+PAGE_SIZE*i);
+			frame_info->vir_add=-1;
+
+
+		}
+        arr[(add - KERNEL_HEAP_START) / PAGE_SIZE] = 0;
+
+
+
+	}
+	else if(add>=KERNEL_HEAP_START&&add<hard_limit){
+		free_block(virtual_address);
+		return ;
+
+	}else{
+		panic("error");
+
+	}
 
 }
 
 
-unsigned int kheap_physical_address(unsigned int virtual_address) {
-	//TODO: [PROJECT'24.MS2 - #05] [1] KERNEL HEAP - kheap_physical_address
-
+uint32 kheap_physical_address(uint32 virtual_address) {
     uint32* page_table;
     struct FrameInfo* frame_info;
 
-
     get_page_table(ptr_page_directory, virtual_address, &page_table);
-
     if (page_table == NULL) return 0;
 
-    uint32 frame_no = (page_table)[PTX(virtual_address)];
-
-
-//    if (frame_info == NULL) return 0; .. Find another way to check on the frame_no
-
-
-    // EQUATION COULD BE WRONG
-    /*
-     * For physical to virtual
-     * fi akher el kmalloc call kvirtual to kphysical
-     * w ely hyrg3 nhutu index le array
-     */
-    uint32 physical_address = (frame_no << 12) | (virtual_address & 0xFFF);
-    return physical_address;
+    frame_info = get_frame_info(ptr_page_directory, virtual_address,&page_table);
+    if (frame_info == NULL) return 0;
+    return to_physical_address(frame_info) | PGOFF(virtual_address);
 }
 
 
 
-unsigned int kheap_virtual_address(unsigned int physical_address)
-{
-	//TODO: [PROJECT'24.MS2 - #06] [1] KERNEL HEAP - kheap_virtual_address
-	// Write your code here, remove the panic and write your code
-	panic("kheap_virtual_address() is not implemented yet...!!");
+uint32 kheap_virtual_address(uint32 physical_address) {
+	 struct FrameInfo* frame_info=to_frame_info(physical_address);
+	 if(frame_info==NULL){
+		 return 0;
+	  }
 
-	//return the virtual address corresponding to given physical_address
-	//refer to the project presentation and documentation for details
-
-	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
+	 if(frame_info->references==0||frame_info->vir_add==-1)
+	 	 {
+		 return 0;
+	 }
+	 uint32 frame_number = physical_address >> 12;
+    return  frame_info->vir_add+ PGOFF(physical_address);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+//#define MAX_FRAMES (total_physical_memory / PAGE_SIZE)
+//uint32 frame_to_va[MAX_FRAMES]; // Reverse mapping table
+//
+//void init_reverse_mapping() {
+//    for (int i = 0; i < MAX_FRAMES; i++) {
+//        frame_to_va[i] = 0; // 0 indicates no mapping
+//    }
+//}
+//void update_reverse_mapping(uint32 physical_address, uint32 virtual_address) {
+//    uint32 frame_no = PPN(physical_address);
+//    frame_to_va[frame_no] = virtual_address;
+//}
+//
+//void clear_reverse_mapping(uint32 physical_address) {
+//    uint32 frame_no = PPN(physical_address);
+//    frame_to_va[frame_no] = 0; // Clear the mapping
+//}
+
+//}
+//#define MAX_FRAMES (total_physical_memory / PAGE_SIZE)
+//uint32 frame_to_va[MAX_FRAMES]; // Reverse mapping table
+//
+//void init_reverse_mapping() {
+//    for (int i = 0; i < MAX_FRAMES; i++) {
+//        frame_to_va[i] = 0; // 0 indicates no mapping
+//    }
+//}
+//void update_reverse_mapping(uint32 physical_address, uint32 virtual_address) {
+//    uint32 frame_no = PPN(physical_address);
+//    frame_to_va[frame_no] = virtual_address;
+//}
+//
+//void clear_reverse_mapping(uint32 physical_address) {
+//    uint32 frame_no = PPN(physical_address);
+//    frame_to_va[frame_no] = 0; // Clear the mapping
+//}
+
 //=================================================================================//
 //============================== BONUS FUNCTION ===================================//
 //=================================================================================//

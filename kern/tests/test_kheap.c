@@ -296,7 +296,7 @@ int test_kmalloc_firstfit1()
 		freeFrames = (int)sys_calculate_free_frames() ;
 		freeDiskFrames = (int)pf_calculate_free_frames() ;
 		ptr_allocations[0] = kmalloc(1*Mega-kilo);
-		if ((uint32) ptr_allocations[0] != (ACTUAL_START)) {cprintf("Actual address allocted: %p",ACTUAL_START); correct = 0; cprintf("1 Wrong start address for the allocated space... \n"); }
+		if ((uint32) ptr_allocations[0] != (ACTUAL_START)) { correct = 0;cprintf("1 Wrong start address for the allocated space... \n"); }
 		if(((int)pf_calculate_free_frames() - freeDiskFrames) !=  0)  { correct = 0; cprintf("1 Page file is changed while it's not expected to. (pages are wrongly allocated/de-allocated in PageFile)\n"); }
 		if ((freeFrames - (int)sys_calculate_free_frames()) < 256) { correct = 0; cprintf("1 Wrong allocation: \n"); }
 
@@ -393,7 +393,7 @@ int test_kmalloc_firstfit1()
 		freeFrames = (int)sys_calculate_free_frames() ;
 		freeDiskFrames = (int)pf_calculate_free_frames() ;
 		ptr_allocations[8] = kmalloc(512*kilo - kilo);
-		if ((uint32) ptr_allocations[8] != (ACTUAL_START + 1*Mega)) { correct = 0; cprintf("12 Wrong start address for the allocated space... \n"); }
+		if ((uint32) ptr_allocations[8] != (ACTUAL_START + 1*Mega)) { correct = 0;	 cprintf("12 Wrong start address for the allocated space... \n"); }
 		if(((int)pf_calculate_free_frames() - freeDiskFrames) !=  0)  { correct = 0; cprintf("12 Page file is changed while it's not expected to. (pages are wrongly allocated/de-allocated in PageFile)\n"); }
 		if ((freeFrames - (int)sys_calculate_free_frames()) < 128) { correct = 0; cprintf("12 Wrong allocation: \n"); }
 
@@ -401,7 +401,8 @@ int test_kmalloc_firstfit1()
 		freeFrames = (int)sys_calculate_free_frames() ;
 		freeDiskFrames = (int)pf_calculate_free_frames() ;
 		ptr_allocations[9] = kmalloc(1*Mega - kilo);
-		if ((uint32) ptr_allocations[9] != (ACTUAL_START + 4*Mega)) { correct = 0; cprintf("13 Wrong start address for the allocated space... \n"); }
+		if ((uint32) ptr_allocations[9] != (ACTUAL_START + 4*Mega)) { correct = 0;	cprintf("ptr_allocations[0] : %p\n",ptr_allocations[9]);cprintf("ACTUAL_START : %p\n",(ACTUAL_START + 4*Mega));
+		  cprintf("13 Wrong start address for the allocated space... \n"); }
 		if(((int)pf_calculate_free_frames() - freeDiskFrames) !=  0)  { correct = 0; cprintf("13 Page file is changed while it's not expected to. (pages are wrongly allocated/de-allocated in PageFile)\n"); }
 		if ((freeFrames - (int)sys_calculate_free_frames()) < 256) { correct = 0; cprintf("13 Wrong allocation: \n"); }
 
@@ -491,7 +492,6 @@ int test_kmalloc_firstfit2()
 	int freeDiskFrames;
 	int eval = 0;
 	bool correct = 1 ;
-
 	correct = 1 ;
 	//[1] Attempt to allocate more than heap size
 	cprintf("\n1. Attempt to allocate more than heap size [10%]\n");
@@ -512,7 +512,7 @@ int test_kmalloc_firstfit2()
 		freeFrames = (int)sys_calculate_free_frames() ;
 		freeDiskFrames = (int)pf_calculate_free_frames() ;
 		ptr_allocations[0] = kmalloc(2*Mega-kilo);
-		if ((uint32) ptr_allocations[0] != (ACTUAL_START)) { correct = 0; cprintf("2 Wrong start address for the allocated space... \n"); }
+		if ((uint32) ptr_allocations[0] != (ACTUAL_START)) { correct = 0;  cprintf("2 Wrong start address for the allocated space... \n"); }
 		if(((int)pf_calculate_free_frames() - freeDiskFrames) !=  0)  { correct = 0; cprintf("2 Page file is changed while it's not expected to. (pages are wrongly allocated/de-allocated in PageFile)\n"); }
 		if ((freeFrames - (int)sys_calculate_free_frames()) < 512) { correct = 0; cprintf("2 Wrong allocation: \n"); }
 
