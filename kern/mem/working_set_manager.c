@@ -17,14 +17,19 @@
  inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, uint32 virtual_address)
 {
     //TODO: [PROJECT'24.MS2 - #07] [2] FAULT HANDLER I - Create a new WS element
-
+cprintf("eskam\n");
     struct WorkingSetElement* WS_new= kmalloc(sizeof(struct WorkingSetElement));
   if (WS_new==NULL){
+	  cprintf("eslam0\n");
       panic("failed to create working set");
   }
 
   WS_new->virtual_address = virtual_address;
   WS_new->empty=0;
+
+  cprintf("eslam1\n");
+
+
   return WS_new;
 }
 

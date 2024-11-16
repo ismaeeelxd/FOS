@@ -865,11 +865,16 @@ uint32 __cur_k_stk = KERNEL_HEAP_START;
 void* create_user_kern_stack(uint32* ptr_user_page_directory) {
 #if USE_KHEAP
     // Define the total stack size (including the guard page)
-    uint32 totalStackSize = KERNEL_STACK_SIZE + PAGE_SIZE;
+	//TODO: [PROJECT'24.MS2 - #09] [2] FAULT HANDLER I - create_user_kern_stack
 
+	cprintf("eskadddm\n");
+    uint32 totalStackSize = KERNEL_STACK_SIZE + PAGE_SIZE;
     // Allocate memory for the kernel stack (including the guard page)
     void* stack_base = kmalloc(totalStackSize);
+    cprintf("1\n");
     if (stack_base == NULL) {
+        cprintf("2\n");
+
         panic("create_user_kern_stack: Memory allocation for kernel stack failed.");
     }
 
@@ -878,6 +883,7 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory) {
 
     // Mark the guard page as not present (unmapped)
    unmap_frame(ptr_user_page_directory, guard_page_va) ;
+   cprintf("3\n");
 
     // Now map the actual stack pages
     uint32 numPagesNeeded = ROUNDUP((uint32)KERNEL_STACK_SIZE,PAGE_SIZE)/PAGE_SIZE;
@@ -885,17 +891,21 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory) {
 
     // Iterate through and map each stack page
     for (uint32 i = 0; i < numPagesNeeded; i++) {
+
         uint32 stack_page_va = first_page_va + i * PAGE_SIZE;
 
         // Allocate a frame for the current stack page
         struct FrameInfo* frame = NULL;
         allocate_frame(&frame);
+        cprintf("4\n");
         if (frame == NULL) {
             panic("create_user_kern_stack: Failed to allocate frame for stack page.");
         }
 
         // Map the allocated frame into the user page directory with writeable and present permissions
         if (map_frame(ptr_user_page_directory, frame, stack_page_va, PERM_WRITEABLE | PERM_PRESENT) != 0) {
+            cprintf("01\n");
+
             panic("create_user_kern_stack: Failed to map stack page into user page directory.");
         }
 
