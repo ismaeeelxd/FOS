@@ -6,6 +6,9 @@
 #endif
 
 #include <inc/types.h>
+//#include <inc/queue.h>
+#include <inc/memlayout.h>
+#include <inc/dynamic_allocator.h>
 
 
 /*2017*/
@@ -45,6 +48,17 @@ int numOfKheapVACalls ;
 uint32 start;
 uint32 segment_break;
 uint32 hard_limit;
+
+struct PageBlock
+{
+	uint32 starting_address;
+	uint32 pages;
+};
+
+//LIST_HEAD(MemPage_LIST, PageBlock);
+//struct MemPage_LIST freePageBlocksList;
+struct PageBlock freePageBlocksList[(KERNEL_HEAP_MAX - KERNEL_HEAP_START) / (PAGE_SIZE)];
+
 
 
 #endif // FOS_KERN_KHEAP_H_

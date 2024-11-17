@@ -1,6 +1,4 @@
 #include "kheap.h"
-#include <inc/memlayout.h>
-#include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
 
 //Initialize the dynamic allocator of kernel heap with the given start address, size & limit
@@ -14,11 +12,17 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
     //[PROJECT'24.MS2] [USER HEAP - KERNEL SIDE] initialize_kheap_dynamic_allocator
     // Write your code here, remove the panic and write your code
 //    panic("initialize_kheap_dynamic_allocator() is not implemented yet...!!");
+	/*
+	 *
+	 * 	For the list optimization XXX
+	 * 	use LIST_INIT(&freePageBlocksList) and refactor the init, kmalloc,kfree functions for this purpose.
+	 * 	Free should have some hard logic to be implemented
+	 * 	allocate should be easy same with init.
+	 */
     start=daStart;
     segment_break=daStart+initSizeToAllocate;
     hard_limit=daLimit;
     struct FrameInfo *ptr_frame_info;
-
     if (initSizeToAllocate>daLimit-daStart)
     {
         panic("The size you want to allocate exceeds the limit");
@@ -26,12 +30,12 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
     }
     for (uint32 current_page=daStart;current_page<segment_break;current_page+=PAGE_SIZE)
     {
-
-       // create_page_table(&ptr_page_directory, current_page);
         allocate_frame(&ptr_frame_info);
         map_frame(ptr_page_directory,ptr_frame_info,current_page, PERM_WRITEABLE | PERM_PRESENT);
+        ptr_frame_info->vir_add = current_page;
     }
-
+//    LIST_INIT(&freePageBlocksList);
+//    LIST_INSERT_HEAD(&freePageBlocksList,firstBlock);
     initialize_dynamic_allocator(start,initSizeToAllocate);
     return 0;
 }
@@ -47,6 +51,7 @@ void* sbrk(int numOfPages)
 				struct FrameInfo *ptr_frame_info = NULL;
 				allocate_frame(&ptr_frame_info);
 				map_frame(ptr_page_directory,ptr_frame_info,i, PERM_WRITEABLE | PERM_PRESENT);
+				ptr_frame_info->vir_add = i;
 			}
 			uint32 tempBrk=segment_break;
 			segment_break+=size;
@@ -101,6 +106,7 @@ void* kmalloc(unsigned int size)
 		int numFreePages =0;
 		uint32 firstpage_alloced=0;
 		for(uint32 i = start;i<KERNEL_HEAP_MAX;i+=PAGE_SIZE){
+			LOG_STRING("infinite loop??");
 			uint32* ptr_page = NULL;
 			if(!get_frame_info(ptr_page_directory,i,&ptr_page)){
 					if(numFreePages==0)
@@ -126,6 +132,8 @@ void* kmalloc(unsigned int size)
 
 		int cnt =0;
 	    while(numPagesNeeded){
+			LOG_STRING("infinite while loop??");
+
 			uint32* ptr_page = NULL;
 	    	struct FrameInfo* frameToBeAlloc = NULL;
 	    	if(!get_frame_info(ptr_page_directory,firstpage_alloced+PAGE_SIZE*cnt,&ptr_page)){
@@ -163,7 +171,7 @@ void kfree(void* virtual_address)
 			 struct FrameInfo* frame_info=	to_frame_info(pa);
 
 			unmap_frame(ptr_page_directory,add+PAGE_SIZE*i);
-			frame_info->vir_add=-1;
+			frame_info->vir_add=0;
 
 
 		}
@@ -201,15 +209,22 @@ uint32 kheap_physical_address(uint32 virtual_address) {
 uint32 kheap_virtual_address(uint32 physical_address) {
 	 struct FrameInfo* frame_info=to_frame_info(physical_address);
 	 if(frame_info==NULL){
+//		 cprintf("frame is null case\n");
 		 return 0;
 	  }
 
-	 if(frame_info->references==0||frame_info->vir_add==-1)
-	 	 {
+	 uint32 frame_number = physical_address >> 12;
+	 if(frame_info->references==0|| frame_info->vir_add == 0)
+	 {
+//		 cprintf("frame is weird case\n");
+//		 cprintf("PA: %p\n",physical_address);
+//		 cprintf("Current va: %d\n",frame_info->vir_add);
+//		 cprintf("Current frame number: %d\n",frame_number);
+//		 cprintf("References: %d\n",frame_info->references);
+
 		 return 0;
 	 }
-	 uint32 frame_number = physical_address >> 12;
-    return  frame_info->vir_add+ PGOFF(physical_address);
+    return  frame_info->vir_add + PGOFF(physical_address);
 }
 
 

@@ -866,49 +866,17 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory) {
 #if USE_KHEAP
     // Define the total stack size (including the guard page)
 	//TODO: [PROJECT'24.MS2 - #09] [2] FAULT HANDLER I - create_user_kern_stack
-
-	cprintf("eskadddm\n");
-    uint32 totalStackSize = KERNEL_STACK_SIZE + PAGE_SIZE;
     // Allocate memory for the kernel stack (including the guard page)
-    void* stack_base = kmalloc(totalStackSize);
-    cprintf("1\n");
+    void* stack_base = kmalloc(KERNEL_STACK_SIZE);
     if (stack_base == NULL) {
-        cprintf("2\n");
-
         panic("create_user_kern_stack: Memory allocation for kernel stack failed.");
     }
-
-    // Calculate the virtual address of the guard page (first page of the stack)
     uint32 guard_page_va = (uint32)stack_base;
-
-    // Mark the guard page as not present (unmapped)
-   unmap_frame(ptr_user_page_directory, guard_page_va) ;
-   cprintf("3\n");
-
-    // Now map the actual stack pages
-    uint32 numPagesNeeded = ROUNDUP((uint32)KERNEL_STACK_SIZE,PAGE_SIZE)/PAGE_SIZE;
-    uint32 first_page_va = guard_page_va + PAGE_SIZE;
-
-    // Iterate through and map each stack page
-    for (uint32 i = 0; i < numPagesNeeded; i++) {
-
-        uint32 stack_page_va = first_page_va + i * PAGE_SIZE;
-
-        // Allocate a frame for the current stack page
-        struct FrameInfo* frame = NULL;
-        allocate_frame(&frame);
-        cprintf("4\n");
-        if (frame == NULL) {
-            panic("create_user_kern_stack: Failed to allocate frame for stack page.");
-        }
-
-        // Map the allocated frame into the user page directory with writeable and present permissions
-        if (map_frame(ptr_user_page_directory, frame, stack_page_va, PERM_WRITEABLE | PERM_PRESENT) != 0) {
-            cprintf("01\n");
-
-            panic("create_user_kern_stack: Failed to map stack page into user page directory.");
-        }
-
+    struct FrameInfo* frame = NULL;
+    uint32* page_table=NULL;
+    for(int i = guard_page_va+PAGE_SIZE;i<guard_page_va+KERNEL_STACK_SIZE;i+=PAGE_SIZE){
+    	frame = get_frame_info(ptr_page_directory,i,&page_table);
+    	map_frame(ptr_user_page_directory,frame,i,PERM_PRESENT|PERM_USER|PERM_WRITEABLE);
     }
 
     // Return the base of the allocated stack, skipping the guard page
@@ -951,6 +919,10 @@ void initialize_uheap_dynamic_allocator(struct Env* e, uint32 daStart, uint32 da
 	//	1) there's no initial allocations for the dynamic allocator of the user heap (=0)
 	//	2) call the initialize_dynamic_allocator(..) to complete the initialization
 	//panic("initialize_uheap_dynamic_allocator() is not implemented yet...!!");
+	e->sbrk = daStart;
+	e->limit = daLimit;
+	e->start = daStart;
+	initialize_dynamic_allocator(daStart,0);
 }
 
 //==============================================================

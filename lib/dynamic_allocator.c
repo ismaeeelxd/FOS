@@ -214,7 +214,7 @@ void *alloc_block_FF(uint32 size)
 					*prevBlockHeader = (prevBlockSize + ((ROUNDUP(size,PAGE_SIZE)) & ~(0x1)));
 					*footer = (prevBlockSize + ((ROUNDUP(size,PAGE_SIZE)) & ~(0x1)));
 					return alloc_block_FF(size-8);
-					//OPTIMIZE THIS SHIT
+					//OPTIMIZE THIS
 				}
 				uint32* header = (uint32*)(address - 4);
 				*header = (ROUNDUP(size,PAGE_SIZE)) & (0x1);
