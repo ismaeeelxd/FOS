@@ -2,7 +2,7 @@
 #define FOS_INC_TYPES_H
 
 /// Screen logging definitions ===============================
-#define LOG_ENABLED 1
+#define LOG_ENABLED 0
 
 #define LOG_STATMENT(statment) if (LOG_ENABLED) { statment; cprintf("\n"); }
 #define LOG_VARS(string, cprintf_variable_arguments) if (LOG_ENABLED) { cprintf(string,cprintf_variable_arguments); cprintf("\n"); }

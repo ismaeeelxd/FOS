@@ -867,20 +867,21 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory) {
     // Define the total stack size (including the guard page)
 	//TODO: [PROJECT'24.MS2 - #09] [2] FAULT HANDLER I - create_user_kern_stack
     // Allocate memory for the kernel stack (including the guard page)
-    void* stack_base = kmalloc(KERNEL_STACK_SIZE);
-    if (stack_base == NULL) {
-        panic("create_user_kern_stack: Memory allocation for kernel stack failed.");
-    }
-    uint32 guard_page_va = (uint32)stack_base;
-    struct FrameInfo* frame = NULL;
-    uint32* page_table=NULL;
-    for(int i = guard_page_va+PAGE_SIZE;i<guard_page_va+KERNEL_STACK_SIZE;i+=PAGE_SIZE){
-    	frame = get_frame_info(ptr_page_directory,i,&page_table);
-    	map_frame(ptr_user_page_directory,frame,i,PERM_PRESENT|PERM_USER|PERM_WRITEABLE);
-    }
+	void* stack_base = kmalloc(KERNEL_STACK_SIZE+PAGE_SIZE);
+	if(!stack_base){
+		return NULL;
+	}
+	struct FrameInfo* frame = 0;
+	uint32* page_table = 0;
+	cprintf("PART 1\n");
+	get_frame_info(ptr_page_directory,(uint32)stack_base,&page_table);
+	cprintf("PART 2\n");
 
-    // Return the base of the allocated stack, skipping the guard page
-    return (void*)(guard_page_va + PAGE_SIZE);
+	unmap_frame(ptr_page_directory,(uint32)stack_base);
+	cprintf("PART 3\n");
+
+	ptr_user_page_directory = page_table;
+	return (stack_base+PAGE_SIZE);
 
 #else
 	if (KERNEL_HEAP_MAX - __cur_k_stk < KERNEL_STACK_SIZE)
@@ -968,23 +969,27 @@ void initialize_environment(struct Env* e, uint32* ptr_user_page_directory, unsi
 	{
 		//[1] Create the stack
 		e->kstack = create_user_kern_stack(e->env_page_directory);
-
+		cprintf("user kernel stack created successfully\n");
 		//[2] Leave room for the trap frame
 		void* sp = e->kstack + KERNEL_STACK_SIZE;
 		sp -= sizeof(struct Trapframe);
 		e->env_tf = (struct Trapframe *) sp;
+		cprintf("Left room for the trap frame\n");
 
 		//[3] Set the address of trapret() first - to return on it after env_start() is returned,
 		sp -= 4;
 		*(uint32*)sp = (uint32)trapret;
+		cprintf("Setting address of trapret\n");
 
 		//[4] Place the context next
 		sp -= sizeof(struct Context);
 		e->context = (struct Context *) sp;
+		cprintf("Placed context next\n");
 
 		//[4] Setup the context to return to env_start() at the early first run from the scheduler
 		memset(e->context, 0, sizeof(*(e->context)));
 		e->context->eip = (uint32) (env_start);
+		cprintf("SETUP DONE\n");
 
 	}
 

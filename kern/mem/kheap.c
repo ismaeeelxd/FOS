@@ -106,7 +106,7 @@ void* kmalloc(unsigned int size)
 		int numFreePages =0;
 		uint32 firstpage_alloced=0;
 		for(uint32 i = start;i<KERNEL_HEAP_MAX;i+=PAGE_SIZE){
-			LOG_STRING("infinite loop??");
+//			LOG_STRING("infinite loop??");
 			uint32* ptr_page = NULL;
 			if(!get_frame_info(ptr_page_directory,i,&ptr_page)){
 					if(numFreePages==0)
@@ -132,7 +132,7 @@ void* kmalloc(unsigned int size)
 
 		int cnt =0;
 	    while(numPagesNeeded){
-			LOG_STRING("infinite while loop??");
+//			LOG_STRING("infinite while loop??");
 
 			uint32* ptr_page = NULL;
 	    	struct FrameInfo* frameToBeAlloc = NULL;
