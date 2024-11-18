@@ -35,6 +35,7 @@ static inline uint8 isKHeapPlacementStrategyWORSTFIT(){if(_KHeapPlacementStrateg
 //***********************************
 
 void* kmalloc(unsigned int size);
+void* kmalloc_with_dir(unsigned int size, uint32*dir);
 void kfree(void* virtual_address);
 void *krealloc(void *virtual_address, unsigned int new_size);
 
@@ -49,15 +50,7 @@ uint32 start;
 uint32 segment_break;
 uint32 hard_limit;
 
-struct PageBlock
-{
-	uint32 starting_address;
-	uint32 pages;
-};
 
-//LIST_HEAD(MemPage_LIST, PageBlock);
-//struct MemPage_LIST freePageBlocksList;
-struct PageBlock freePageBlocksList[(KERNEL_HEAP_MAX - KERNEL_HEAP_START) / (PAGE_SIZE)];
 
 
 

@@ -872,15 +872,16 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory) {
 		return NULL;
 	}
 	struct FrameInfo* frame = 0;
-	uint32* page_table = 0;
-	cprintf("PART 1\n");
-	get_frame_info(ptr_page_directory,(uint32)stack_base,&page_table);
-	cprintf("PART 2\n");
+//	uint32* page_table = 0;
+//	cprintf("PART 1\n");
+//	get_frame_info(ptr_page_directory,(uint32)stack_base,&page_table);
+	pt_set_page_permissions(ptr_user_page_directory,(uint32)stack_base,PERM_PRESENT,0);
+	pt_set_page_permissions(ptr_page_directory,(uint32)stack_base,PERM_PRESENT,0);
 
-	unmap_frame(ptr_page_directory,(uint32)stack_base);
-	cprintf("PART 3\n");
+	//	unmap_frame(ptr_user_page_directory,(uint32)stack_base);
+//	cprintf("PART 3\n");
 
-	ptr_user_page_directory = page_table;
+//	ptr_user_page_directory = ptr_page_directory;
 	return (stack_base+PAGE_SIZE);
 
 #else
@@ -969,27 +970,27 @@ void initialize_environment(struct Env* e, uint32* ptr_user_page_directory, unsi
 	{
 		//[1] Create the stack
 		e->kstack = create_user_kern_stack(e->env_page_directory);
-		cprintf("user kernel stack created successfully\n");
+//		cprintf("user kernel stack created successfully\n");
 		//[2] Leave room for the trap frame
 		void* sp = e->kstack + KERNEL_STACK_SIZE;
 		sp -= sizeof(struct Trapframe);
 		e->env_tf = (struct Trapframe *) sp;
-		cprintf("Left room for the trap frame\n");
+//		cprintf("Left room for the trap frame\n");
 
 		//[3] Set the address of trapret() first - to return on it after env_start() is returned,
 		sp -= 4;
 		*(uint32*)sp = (uint32)trapret;
-		cprintf("Setting address of trapret\n");
+//		cprintf("Setting address of trapret\n");
 
 		//[4] Place the context next
 		sp -= sizeof(struct Context);
 		e->context = (struct Context *) sp;
-		cprintf("Placed context next\n");
+//		cprintf("Placed context next\n");
 
 		//[4] Setup the context to return to env_start() at the early first run from the scheduler
 		memset(e->context, 0, sizeof(*(e->context)));
 		e->context->eip = (uint32) (env_start);
-		cprintf("SETUP DONE\n");
+//		cprintf("SETUP DONE\n");
 
 	}
 
@@ -1062,6 +1063,7 @@ void initialize_environment(struct Env* e, uint32* ptr_user_page_directory, unsi
 
 	//Completes other environment initializations, (envID, status and most of registers)
 	complete_environment_initialization(e);
+//	cprintf("DONE\n");
 }
 
 //========================================================
@@ -1073,6 +1075,7 @@ void complete_environment_initialization(struct Env* e)
 	//different permissions.
 	e->env_page_directory[PDX(VPT)]  = e->env_cr3 | PERM_PRESENT | PERM_WRITEABLE;
 	e->env_page_directory[PDX(UVPT)] = e->env_cr3 | PERM_PRESENT | PERM_USER;
+//	cprintf("TESTT\n");
 
 	// page file directory initialization
 	e->disk_env_pgdir= 0;

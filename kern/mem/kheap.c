@@ -10,15 +10,7 @@
 int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
 {
     //[PROJECT'24.MS2] [USER HEAP - KERNEL SIDE] initialize_kheap_dynamic_allocator
-    // Write your code here, remove the panic and write your code
 //    panic("initialize_kheap_dynamic_allocator() is not implemented yet...!!");
-	/*
-	 *
-	 * 	For the list optimization XXX
-	 * 	use LIST_INIT(&freePageBlocksList) and refactor the init, kmalloc,kfree functions for this purpose.
-	 * 	Free should have some hard logic to be implemented
-	 * 	allocate should be easy same with init.
-	 */
     start=daStart;
     segment_break=daStart+initSizeToAllocate;
     hard_limit=daLimit;
@@ -34,8 +26,6 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
         map_frame(ptr_page_directory,ptr_frame_info,current_page, PERM_WRITEABLE | PERM_PRESENT);
         ptr_frame_info->vir_add = current_page;
     }
-//    LIST_INIT(&freePageBlocksList);
-//    LIST_INSERT_HEAD(&freePageBlocksList,firstBlock);
     initialize_dynamic_allocator(start,initSizeToAllocate);
     return 0;
 }

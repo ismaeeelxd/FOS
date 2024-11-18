@@ -236,7 +236,7 @@ static void trap_dispatch(struct Trapframe *tf)
 {
 	if(tf->tf_trapno == T_PGFLT)
 	{
-		print_trapframe(tf);
+//		print_trapframe(tf);
 		//2016: Bypass the faulted instruction [used for some tests in which we need to resume the execution after an intended page fault]
 		if (bypassInstrLength != 0)
 		{

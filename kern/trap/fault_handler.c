@@ -72,7 +72,7 @@ void fault_handler(struct Trapframe *tf)
 	// Read processor's CR2 register to find the faulting address
 	uint32 fault_va = rcr2();
 	//	cprintf("\n************Faulted VA = %x************\n", fault_va);
-		print_trapframe(tf);
+//		print_trapframe(tf);
 	/******************************************************/
 
 	//If same fault va for 3 times, then panic
@@ -151,27 +151,38 @@ void fault_handler(struct Trapframe *tf)
 			//TODO: [PROJECT'24.MS2 - #08] [2] FAULT HANDLER I - Check for invalid pointers
 			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 			//your code is here
-			cprintf("we're inside user trap @ check for invalid pointers part\n");
-			uint32 perms = pt_get_page_permissions(faulted_env->env_page_directory, fault_va);
-			if(!(perms & PERM_WRITEABLE)){
-				cprintf("PERM WRITEABLE CHECK NOT VALID\n");
+			int perms;
+			//CHECK IF IT IS POINTING TO READ-ONLY PAGE
+			perms = pt_get_page_permissions(faulted_env->env_page_directory, fault_va);
+
+			if(fault_va>=USER_HEAP_START&&fault_va<=USER_HEAP_MAX)
+			{
+				//if it is unmarked
+				if(!(perms & PERM_AVAILABLE))
+				{
+					env_exit();
+				}
+
+			}
+
+
+
+			else if(fault_va>USER_LIMIT)
+			{
 				env_exit();
 			}
-			cprintf("PERM WRITEABLE CHECK\n");
-			if(!(perms & PERM_USER)){
-				cprintf("PERM USER CHECK NOT VALID\n");
 
-				env_exit();
+			else if(!(perms&PERM_WRITEABLE)){
+							env_exit();
 			}
-			cprintf("PERM USER CHECK\n");
 
-			if(!(perms & PERM_PRESENT)){
-				cprintf("PERM PRESENT CHECK NOT VALID\n");
-				env_exit();
-			}
-			cprintf("PERM PRESENT CHECK\n");
+//			else if((perms & PERM_PRESENT))
+//			{
+//				env_exit();
+//			}
+			//CHECK IF IT IS POINTING TO KERNEL
 
-
+			//CHECK IF IT IS POINTING TO UNMARKED PAGE
 			/*============================================================================================*/
 		}
 
