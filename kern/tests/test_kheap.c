@@ -736,6 +736,8 @@ int test_fastfirstfit()
 	for(i = 0; i < numOf2MAllocs ;i++)
 	{
 		if((uint32)ptr_fast_allocations[i] != ACTUAL_START + i*allocSize){
+			cprintf("%d\n",numOf2MAllocs);
+			cprintf("%d\n",i);
 			cprintf("%p\n",ptr_fast_allocations[i]);
 			cprintf("%p\n",ACTUAL_START+i*allocSize);
 			panic("Wrong allocation, Check next fitting strategy is working correctly");

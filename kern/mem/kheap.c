@@ -34,7 +34,7 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 
     free_page_count = 1;
     free_pages[0].starting_addr = hard_limit+PAGE_SIZE;
-    free_pages[0].numOfPagesFreeAfter = ((KERNEL_HEAP_MAX - (hard_limit+PAGE_SIZE)) / (PAGE_SIZE)) - 2;
+    free_pages[0].numOfPagesFreeAfter = ((KERNEL_HEAP_MAX - (hard_limit+PAGE_SIZE)) / (PAGE_SIZE)) - 1;
 
     initialize_dynamic_allocator(start,initSizeToAllocate);
     return 0;
@@ -94,7 +94,7 @@ void* kmalloc(unsigned int size) {
      }
     int numPagesNeeded = (ROUNDUP(size, PAGE_SIZE)) / PAGE_SIZE;
 
-	if(KERNEL_HEAP_MAX <= (hard_limit+PAGE_SIZE) + size){
+	if(KERNEL_HEAP_MAX-PAGE_SIZE+1 <= (hard_limit+PAGE_SIZE) + size){
 		return NULL;
 	}
 
@@ -121,6 +121,7 @@ void* kmalloc(unsigned int size) {
                 for (uint32 j = i; j < free_page_count - 1; j++) {
                     free_pages[j] = free_pages[j + 1];
                 }
+
                 free_page_count--;
             } else {
                 // Partially allocate, adjust the block
