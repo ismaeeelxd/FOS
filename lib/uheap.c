@@ -1,5 +1,6 @@
 #include <inc/lib.h>
 
+//#include "memory_manager.h"
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
@@ -16,6 +17,7 @@ void* sbrk(int increment)
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
+int arr[(USER_HEAP_MAX-USER_HEAP_START)/PAGE_SIZE]={0};
 void* malloc(uint32 size)
 {
 	//==============================================================
@@ -24,8 +26,72 @@ void* malloc(uint32 size)
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #12] [3] USER HEAP [USER SIDE] - malloc()
 	// Write your code here, remove the panic and write your code
-	panic("malloc() is not implemented yet...!!");
-	return NULL;
+//	panic("malloc() is not implemented yet...!!");
+
+	if(!sys_isUHeapPlacementStrategyFIRSTFIT())
+		return NULL;
+	 if(size<=DYN_ALLOC_MAX_BLOCK_SIZE){
+		 return alloc_block_FF(size);
+	}
+	 	 int numPagesNeeded=ROUNDUP((uint32)size,PAGE_SIZE)/PAGE_SIZE;
+	 	 if(!myEnv){
+	 		 return NULL;
+	 	 }
+	    uint32 start= myEnv->limit + PAGE_SIZE;
+
+		if(USER_HEAP_MAX <= start + size){
+			return NULL;
+		}
+
+		int numFreePages =0;
+		uint32 firstpage_alloced=0;
+		if(numPagesNeeded > sys_calculate_free_frames())
+			{
+				return NULL;
+			}
+		for(uint32 i = start;i<USER_HEAP_MAX;i+=PAGE_SIZE){
+			if(!arr[(i-USER_HEAP_START)/PAGE_SIZE]){
+					if(numFreePages==0)
+						firstpage_alloced=i;
+				numFreePages++;
+				if(numFreePages == numPagesNeeded){
+					break;
+				}
+			}else{
+
+				 numFreePages =0;
+				 firstpage_alloced=0;
+			}
+		}
+
+		if( numFreePages < numPagesNeeded){
+			return NULL;
+		}
+
+		int cnt =0;
+	    while(numPagesNeeded){
+//			LOG_STRING("infinite while loop??");
+
+			uint32* ptr_page = NULL;
+	    	struct FrameInfo* frameToBeAlloc = NULL;
+	    	if(!arr[(firstpage_alloced+PAGE_SIZE*cnt-USER_HEAP_START)/PAGE_SIZE]){
+	    		sys_allocate_user_mem(firstpage_alloced+PAGE_SIZE*cnt,numPagesNeeded*PAGE_SIZE);
+//	    		frameToBeAlloc->vir_add=(uint32)(firstpage_alloced+(PAGE_SIZE*cnt));
+
+	    		if(ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE == numPagesNeeded)
+	    			arr[(firstpage_alloced-USER_HEAP_START)/PAGE_SIZE]=numPagesNeeded;
+
+	    		numPagesNeeded--;
+	    	}
+	    	++cnt;
+
+	    }
+		if(firstpage_alloced==0){
+			return NULL;
+		}
+	   	    return (void*)(firstpage_alloced);
+
+
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
 	//to check the current strategy
 
