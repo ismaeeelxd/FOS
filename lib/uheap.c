@@ -75,6 +75,7 @@ void* malloc(uint32 size)
 			uint32* ptr_page = NULL;
 	    	struct FrameInfo* frameToBeAlloc = NULL;
 	    	if(!arr[(firstpage_alloced+PAGE_SIZE*cnt-USER_HEAP_START)/PAGE_SIZE]){
+
 	    		sys_allocate_user_mem(firstpage_alloced+PAGE_SIZE*cnt,numPagesNeeded*PAGE_SIZE);
 //	    		frameToBeAlloc->vir_add=(uint32)(firstpage_alloced+(PAGE_SIZE*cnt));
 

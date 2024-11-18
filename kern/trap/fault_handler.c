@@ -154,26 +154,19 @@ void fault_handler(struct Trapframe *tf)
 			int perms;
 			//CHECK IF IT IS POINTING TO READ-ONLY PAGE
 			perms = pt_get_page_permissions(faulted_env->env_page_directory, fault_va);
-
-			if(fault_va>=USER_HEAP_START&&fault_va<=USER_HEAP_MAX)
-			{
-				//if it is unmarked
-				if(!(perms & PERM_AVAILABLE))
-				{
-					env_exit();
-				}
-
+			if (fault_va >= USER_HEAP_START && fault_va <= USER_HEAP_MAX) {
+			    // If the page is unmarked (does not have PERM_AVAILABLE).
+			    if (!(perms & PERM_AVAILABLE)) {
+			        env_exit();
+			    }
 			}
-
-
-
-			else if(fault_va>USER_LIMIT)
-			{
-				env_exit();
+			// Check if the faulting address exceeds the user address limit.
+			else if (fault_va > USER_LIMIT) {
+			    env_exit();
 			}
-
-			else if(!(perms&PERM_WRITEABLE)){
-							env_exit();
+			// Check if the fault occurs on a page with write access violation.
+			else if ((perms & PERM_PRESENT) || (perms & PERM_WRITEABLE)) {
+			    env_exit();
 			}
 
 //			else if((perms & PERM_PRESENT))
@@ -261,30 +254,23 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 //		panic("page_fault_handler().PLACEMENT is not implemented yet...!!");
 		uint32* ex;
 		struct FrameInfo* ptr_frame_info=NULL;
-		pf_add_empty_env_page(faulted_env,fault_va,0);
-		cprintf("mat0\n");
 
 		int ret=allocate_frame(&ptr_frame_info);
-		if(ret==0)
-		{
-			cprintf("mat1\n");
-			map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_AVAILABLE | PERM_PRESENT|PERM_USER|PERM_WRITEABLE);
-		}
+		map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_AVAILABLE | PERM_PRESENT|PERM_USER|PERM_WRITEABLE);
+
 		int rtrn = pf_read_env_page(faulted_env,(void*) fault_va);
 		if(rtrn== E_PAGE_NOT_EXIST_IN_PF)
 		{
 			if((fault_va>=KERNEL_HEAP_START&&fault_va<KERNEL_HEAP_MAX)||(fault_va >= USTACKBOTTOM && fault_va < USTACKTOP))
 			{}else{
-				sched_kill_env(faulted_env->env_id);
+				env_exit();
 				return;
 			}
 		}
-		cprintf("mat3\n");
 
 		struct WorkingSetElement* created_element= env_page_ws_list_create_element(faulted_env, fault_va);
 		LIST_INSERT_TAIL(&(faulted_env->page_WS_list), created_element);
 		if(LIST_SIZE(&faulted_env->page_WS_list)==faulted_env->page_WS_max_size){
-			cprintf("mat4\n");
 //			struct WorkingSetElement* temp=LIST_LAST(&faulted_env->page_WS_list);
 //			faulted_env->page_last_WS_element=LIST_NEXT(temp);
 			faulted_env->page_last_WS_element = LIST_FIRST(&(faulted_env->page_WS_list));

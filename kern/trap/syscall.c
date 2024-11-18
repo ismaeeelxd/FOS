@@ -333,7 +333,7 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 {
 	//TODO: [PROJECT'24.MS1 - #03] [2] SYSTEM CALLS - Params Validation
 	HarsEl2amn(virtual_address,size);
-
+	cprintf("Ab\n");
 	allocate_user_mem(cur_env, virtual_address, size);
 	return;
 }

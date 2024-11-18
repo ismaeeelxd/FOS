@@ -867,22 +867,14 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory) {
     // Define the total stack size (including the guard page)
 	//TODO: [PROJECT'24.MS2 - #09] [2] FAULT HANDLER I - create_user_kern_stack
     // Allocate memory for the kernel stack (including the guard page)
-	void* stack_base = kmalloc(KERNEL_STACK_SIZE+PAGE_SIZE);
-	if(!stack_base){
-		return NULL;
-	}
-	struct FrameInfo* frame = 0;
-//	uint32* page_table = 0;
-//	cprintf("PART 1\n");
-//	get_frame_info(ptr_page_directory,(uint32)stack_base,&page_table);
-	pt_set_page_permissions(ptr_user_page_directory,(uint32)stack_base,PERM_PRESENT,0);
-	pt_set_page_permissions(ptr_page_directory,(uint32)stack_base,PERM_PRESENT,0);
-
-	//	unmap_frame(ptr_user_page_directory,(uint32)stack_base);
-//	cprintf("PART 3\n");
-
-//	ptr_user_page_directory = ptr_page_directory;
-	return (stack_base+PAGE_SIZE);
+	 void* stack_base = kmalloc(KERNEL_STACK_SIZE);
+	        if(!stack_base){
+	            return NULL;
+	        }
+	        struct FrameInfo* frame = 0;
+	        pt_set_page_permissions(ptr_user_page_directory,(uint32)stack_base,0,PERM_PRESENT);
+	        pt_set_page_permissions(ptr_page_directory,(uint32)stack_base,0,PERM_PRESENT);
+	        return (stack_base);
 
 #else
 	if (KERNEL_HEAP_MAX - __cur_k_stk < KERNEL_STACK_SIZE)

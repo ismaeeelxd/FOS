@@ -170,7 +170,22 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
 	// Write your code here, remove the panic and write your code
-	panic("allocate_user_mem() is not implemented yet...!!");
+	//panic("allocate_user_mem() is not implemented yet...!!");
+	uint32*page_table;
+	uint32 num_pages=(ROUNDUP(size, PAGE_SIZE)) / PAGE_SIZE;
+cprintf("isssssss");
+			while(num_pages--)
+			{
+				page_table=NULL;
+				if(get_page_table(e->env_page_directory,virtual_address,&page_table)==TABLE_NOT_EXIST)
+				{
+					page_table=create_page_table(e->env_page_directory,virtual_address);
+				}
+				pt_set_page_permissions(e->env_page_directory,virtual_address,PERM_AVAILABLE,0);
+				virtual_address+=PAGE_SIZE;
+			}
+			return;
+
 }
 
 //=====================================
