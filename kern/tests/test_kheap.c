@@ -735,8 +735,11 @@ int test_fastfirstfit()
 	// check the addresses of the allocation
 	for(i = 0; i < numOf2MAllocs ;i++)
 	{
-		if((uint32)ptr_fast_allocations[i] != ACTUAL_START + i*allocSize)
+		if((uint32)ptr_fast_allocations[i] != ACTUAL_START + i*allocSize){
+			cprintf("%p\n",ptr_fast_allocations[i]);
+			cprintf("%p\n",ACTUAL_START+i*allocSize);
 			panic("Wrong allocation, Check next fitting strategy is working correctly");
+		}
 	}
 
 	if ((pf_calculate_free_frames() - freeDiskFrames) != 0) panic("Page file is changed while it's not expected to. (pages are wrongly allocated/de-allocated in PageFile)");
