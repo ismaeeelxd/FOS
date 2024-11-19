@@ -152,30 +152,27 @@ void fault_handler(struct Trapframe *tf)
 			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 			//your code is here
 			int perms;
-			//CHECK IF IT IS POINTING TO READ-ONLY PAGE
+			cprintf("IN USER TRAP INVALID POINTER PART\n");
 			perms = pt_get_page_permissions(faulted_env->env_page_directory, fault_va);
-			if (fault_va >= USER_HEAP_START && fault_va <= USER_HEAP_MAX) {
-			    // If the page is unmarked (does not have PERM_AVAILABLE).
+
+			 if (fault_va >= USER_LIMIT) {
+			    cprintf("USER LIMIT ENV EXIT\n");
+
+			    env_exit();
+			}
+			else if ((perms & PERM_WRITEABLE) || (perms & PERM_PRESENT)) {
+		    	cprintf("PERM_WRITEABLE/PRESENT BIT ENV EXIT\n");
+
+			    env_exit();
+			}
+
+			else if (fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX) {
 			    if (!(perms & PERM_AVAILABLE)) {
+			    	cprintf("PERM_AVALIABLE BIT ENV EXIT\n");
 			        env_exit();
 			    }
 			}
-			// Check if the faulting address exceeds the user address limit.
-			else if (fault_va > USER_LIMIT) {
-			    env_exit();
-			}
-			// Check if the fault occurs on a page with write access violation.
-			else if ((perms & PERM_PRESENT) || (perms & PERM_WRITEABLE)) {
-			    env_exit();
-			}
 
-//			else if((perms & PERM_PRESENT))
-//			{
-//				env_exit();
-//			}
-			//CHECK IF IT IS POINTING TO KERNEL
-
-			//CHECK IF IT IS POINTING TO UNMARKED PAGE
 			/*============================================================================================*/
 		}
 

@@ -35,7 +35,7 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
     free_page_count = 1;
     free_pages[0].starting_addr = hard_limit+PAGE_SIZE;
     free_pages[0].numOfPagesFreeAfter = ((KERNEL_HEAP_MAX - (hard_limit+PAGE_SIZE)) / (PAGE_SIZE)) - 1;
-
+    dir = ptr_page_directory;
     initialize_dynamic_allocator(start,initSizeToAllocate);
     return 0;
 }
@@ -82,6 +82,13 @@ void* sbrk(int numOfPages)
 
 }
 int arr[(KERNEL_HEAP_MAX - KERNEL_HEAP_START) / (PAGE_SIZE)]={0};
+
+void* kmalloc_with_dir(uint32 size,uint32* directory){
+	dir = directory;
+	void* s = kmalloc(size);
+	dir = ptr_page_directory;
+	return s;
+}
 void* kmalloc(unsigned int size) {
     // Ensure First-Fit strategy is used
     if (!isKHeapPlacementStrategyFIRSTFIT()) {
@@ -108,7 +115,7 @@ void* kmalloc(unsigned int size) {
             for (int j = 0; j < numPagesNeeded; j++) {
                 struct FrameInfo* frameToBeAlloc = NULL;
                 allocate_frame(&frameToBeAlloc);
-                map_frame(ptr_page_directory, frameToBeAlloc,
+                map_frame(dir, frameToBeAlloc,
                           first_page_allocated + (j * PAGE_SIZE),
                           PERM_WRITEABLE | PERM_PRESENT);
                 frameToBeAlloc->vir_add = first_page_allocated+(j*PAGE_SIZE);

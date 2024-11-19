@@ -35,7 +35,7 @@ static inline uint8 isKHeapPlacementStrategyWORSTFIT(){if(_KHeapPlacementStrateg
 //***********************************
 
 void* kmalloc(unsigned int size);
-void* kmalloc_with_dir(unsigned int size, uint32*dir);
+void* kmalloc_with_dir(uint32 size, uint32*dir);
 void kfree(void* virtual_address);
 void *krealloc(void *virtual_address, unsigned int new_size);
 
@@ -49,11 +49,11 @@ int numOfKheapVACalls ;
 uint32 start;
 uint32 segment_break;
 uint32 hard_limit;
+uint32* dir;
 struct FreePage {
-    uint32 starting_addr;    // Starting address of this block
-    uint32 numOfPagesFreeAfter; // Number of free pages in this block
+    uint32 starting_addr;
+    uint32 numOfPagesFreeAfter;
 };
-      // Number of valid entries in `free_pages`
 
 void add_free_block(uint32 addr, uint32 num_pages);
 

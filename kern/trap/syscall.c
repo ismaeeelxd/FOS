@@ -303,8 +303,13 @@ int sys_pf_calculate_allocated_pages(void)
 //+++++++++++++++ helper Funcation for System_Call +++++++++++++++++++++++
 
 void HarsEl2amn(uint32 virtual_address,uint32 size){
-	if(virtual_address<USER_HEAP_START|| virtual_address>USER_HEAP_MAX||!size|| virtual_address % PAGE_SIZE != 0)
+	if(virtual_address<USER_HEAP_START|| virtual_address>USER_HEAP_MAX||!size|| virtual_address % PAGE_SIZE != 0){
+					cprintf("USER HEAP START: %p\n",USER_HEAP_START);
+					cprintf("USER HEAP MAX: %p\n",USER_HEAP_MAX);
+					cprintf("VA: %p\n",virtual_address);
+					cprintf("Size: %d\n",size);
 					env_exit();
+	}
 }
 
 
@@ -333,7 +338,6 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 {
 	//TODO: [PROJECT'24.MS1 - #03] [2] SYSTEM CALLS - Params Validation
 	HarsEl2amn(virtual_address,size);
-	cprintf("Ab\n");
 	allocate_user_mem(cur_env, virtual_address, size);
 	return;
 }
