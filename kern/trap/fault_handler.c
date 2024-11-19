@@ -261,7 +261,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		int rtrn = pf_read_env_page(faulted_env,(void*) fault_va);
 		if(rtrn== E_PAGE_NOT_EXIST_IN_PF)
 		{
-			if((fault_va>=KERNEL_HEAP_START&&fault_va<KERNEL_HEAP_MAX)||(fault_va >= USTACKBOTTOM && fault_va < USTACKTOP))
+			if((fault_va>=USER_HEAP_START&&fault_va<USER_HEAP_MAX)||(fault_va >= USTACKBOTTOM && fault_va < USTACKTOP))
 			{}else{
 				env_exit();
 				return;
@@ -277,7 +277,6 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 
 
 		}else{
-			cprintf("mat5\n");
 			faulted_env->page_last_WS_element=NULL; /// lw el list is not full
 
 		}

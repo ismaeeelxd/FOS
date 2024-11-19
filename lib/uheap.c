@@ -38,19 +38,21 @@ void* malloc(uint32 size)
 	 		 return NULL;
 	 	 }
 	    uint32 start= myEnv->limit + PAGE_SIZE;
-
+//	    cprintf("start at %p\n",start);
+//	    cprintf("user heap max at %p\n",USER_HEAP_MAX);
 		if(USER_HEAP_MAX <= start + size){
 			return NULL;
 		}
-
+		/*
+		 *
+		 *
+		 *
+		 */
 		int numFreePages =0;
 		uint32 firstpage_alloced=0;
-		if(numPagesNeeded > sys_calculate_free_frames())
-			{
-				return NULL;
-			}
+
 		for(uint32 i = start;i<USER_HEAP_MAX;i+=PAGE_SIZE){
-			if(!arr[(i-USER_HEAP_START)/PAGE_SIZE]){
+			if(!arr[(i - USER_HEAP_START)/PAGE_SIZE]){
 					if(numFreePages==0)
 						firstpage_alloced=i;
 				numFreePages++;
@@ -68,34 +70,15 @@ void* malloc(uint32 size)
 			return NULL;
 		}
 
-		int cnt =0;
-	    while(numPagesNeeded){
-//			LOG_STRING("infinite while loop??");
-
-			uint32* ptr_page = NULL;
-	    	struct FrameInfo* frameToBeAlloc = NULL;
-	    	if(!arr[(firstpage_alloced+PAGE_SIZE*cnt-USER_HEAP_START)/PAGE_SIZE]){
-
-	    		sys_allocate_user_mem(firstpage_alloced+PAGE_SIZE*cnt,numPagesNeeded*PAGE_SIZE);
-//	    		frameToBeAlloc->vir_add=(uint32)(firstpage_alloced+(PAGE_SIZE*cnt));
-
-	    		if(ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE == numPagesNeeded)
-	    			arr[(firstpage_alloced-USER_HEAP_START)/PAGE_SIZE]=numPagesNeeded;
-
-	    		numPagesNeeded--;
-	    	}
-	    	++cnt;
-
-	    }
-		if(firstpage_alloced==0){
-			return NULL;
+		if(numFreePages >= numPagesNeeded && firstpage_alloced != 0){
+			sys_allocate_user_mem(firstpage_alloced,size);
+			for(int i = 0;i<numPagesNeeded;++i){
+				arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=1;
+			}
+//			cprintf("First page allocated: %p\n",firstpage_alloced);
+			return (void*)(firstpage_alloced);
 		}
-	   	    return (void*)(firstpage_alloced);
-
-
-	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
-	//to check the current strategy
-
+		return NULL;
 }
 
 //=================================

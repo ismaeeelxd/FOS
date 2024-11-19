@@ -173,7 +173,7 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	//panic("allocate_user_mem() is not implemented yet...!!");
 	uint32*page_table;
 	uint32 num_pages=(ROUNDUP(size, PAGE_SIZE)) / PAGE_SIZE;
-cprintf("isssssss");
+
 			while(num_pages--)
 			{
 				page_table=NULL;
