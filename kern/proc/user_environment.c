@@ -916,6 +916,8 @@ void initialize_uheap_dynamic_allocator(struct Env* e, uint32 daStart, uint32 da
 	e->sbrk = daStart;
 	e->limit = daLimit;
 	e->start = daStart;
+//	allocate_user_mem(e,daStart,sbrk-daStart);
+
 	initialize_dynamic_allocator(daStart,0);
 }
 

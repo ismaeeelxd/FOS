@@ -142,12 +142,12 @@ void* sys_sbrk(int numOfPages)
 	if (!numOfPages)
 		return (void*)env->sbrk;
 
-
     if (numOfPages>0){
 		uint32 size =numOfPages*PAGE_SIZE;
 		if ((size+env->sbrk)<= env->limit){
 			uint32 tempBrk=env->sbrk;
 			env->sbrk+=size;
+			allocate_user_mem(env,tempBrk,env->sbrk-tempBrk);
 			return (void*)tempBrk;
 		}
 	}
@@ -172,13 +172,10 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	// Write your code here, remove the panic and write your code
 	//panic("allocate_user_mem() is not implemented yet...!!");
 	uint32*page_table;
-<<<<<<< HEAD
 	uint32 num_pages= (ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE;
 //	cprintf("In allocate user mem with pages: %d\n",num_pages);
-=======
-	uint32 num_pages=(ROUNDUP(size, PAGE_SIZE)) / PAGE_SIZE;
 
->>>>>>> 91bf3695866e272f61b5bdd4a57480b7f9e49611
+//			cprintf("Allocating: %d pages\n",num_pages);
 			while(num_pages--)
 			{
 				page_table=NULL;

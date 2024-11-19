@@ -79,10 +79,6 @@ void* malloc(uint32 size)
 			return (void*)(firstpage_alloced);
 		}
 		return NULL;
-<<<<<<< HEAD
-
-=======
->>>>>>> 91bf3695866e272f61b5bdd4a57480b7f9e49611
 }
 
 //=================================
