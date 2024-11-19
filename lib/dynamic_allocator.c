@@ -174,9 +174,10 @@ void *alloc_block_FF(uint32 size)
 
 	//TODO: [PROJECT'24.MS1 - #06] [3] DYNAMIC ALLOCATOR - alloc_block_FF
 
-	if(!size)
+	if(!size){
+		cprintf("1\n");
 		return NULL;
-	size+= 8;
+	}	size+= 8;
 
 	if(size < 16){
 		size = 16;
@@ -184,7 +185,10 @@ void *alloc_block_FF(uint32 size)
 	if(!LIST_SIZE(&freeBlocksList)){
 		void* address = sbrk((ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE);
 		if(address == (void*)-1)
+		{
+			cprintf("2\n");
 			return NULL;
+		}
 		uint32* newEndBlock = (uint32*)(address + (ROUNDUP(size,PAGE_SIZE)) - 4);
 		*newEndBlock = 0 | 1;
 		uint32* header = (uint32*)(address - 4);
@@ -202,7 +206,10 @@ void *alloc_block_FF(uint32 size)
 
 				void* address = sbrk((ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE);
 				if(address == (void*)-1)
+				{
+					cprintf("3\n");
 					return NULL;
+				}
 				uint32 prevBlockSize = (*((uint32*)(address - 8))) & ~(0x1);
 				void* prevBlock = address - prevBlockSize;
 				uint32* footer = (uint32*)(address + (ROUNDUP(size,PAGE_SIZE)) - 8);
@@ -240,7 +247,7 @@ void *alloc_block_FF(uint32 size)
 	}
 
 
-
+	cprintf("8\n");
 	return NULL;
 
 }

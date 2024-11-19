@@ -145,13 +145,17 @@ void* sys_sbrk(int numOfPages)
     if (numOfPages>0){
 		uint32 size =numOfPages*PAGE_SIZE;
 		if ((size+env->sbrk)<= env->limit){
+
 			uint32 tempBrk=env->sbrk;
 			env->sbrk+=size;
 			allocate_user_mem(env,tempBrk,env->sbrk-tempBrk);
+
 			return (void*)tempBrk;
 		}
 	}
-
+	cprintf("ASS\n");
+	cprintf("current break: %p\n",env->sbrk);
+	cprintf("current limit: %p\n",env->limit);
 		return (void*)-1 ;
 
 
@@ -204,8 +208,32 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
 	// Write your code here, remove the panic and write your code
-	panic("free_user_mem() is not implemented yet...!!");
+	uint32 no_of_pages=ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE;
+		uint32 *ptr_page_table;
+		while(no_of_pages!=0)
+		{
+			get_page_table(e->env_page_directory,virtual_address,&ptr_page_table);
+			int perm=pt_get_page_permissions(e->env_page_directory,virtual_address);
 
+			/// 1)Unmark the given range in v.mem & phy.mem
+			if(perm & PERM_AVAILABLE){
+			pt_set_page_permissions(e->env_page_directory,virtual_address,0,PERM_AVAILABLE);
+			}
+
+			if(get_frame_info(e->env_page_directory,virtual_address,&ptr_page_table)!=0)
+			{
+				unmap_frame(e->env_page_directory,virtual_address);
+			}
+
+			/// 2)free all pages from page file
+			 if(pf_read_env_page(e,(void*)virtual_address)==0)
+			 {
+				 pf_remove_env_page(e,virtual_address);
+			 }
+			 /// 3)Free pages that are resident in the working set from the memory
+			 env_page_ws_invalidate(e,virtual_address);
+			 no_of_pages--;
+		}
 
 	//TODO: [PROJECT'24.MS2 - BONUS#3] [3] USER HEAP [KERNEL SIDE] - O(1) free_user_mem
 }

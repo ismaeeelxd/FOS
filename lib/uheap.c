@@ -72,8 +72,15 @@ void* malloc(uint32 size)
 
 		if(numFreePages >= numPagesNeeded && firstpage_alloced != 0){
 			sys_allocate_user_mem(firstpage_alloced,size);
+
 			for(int i = 0;i<numPagesNeeded;++i){
+				if(i==0)
+				{
+					arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=numPagesNeeded;
+					continue;
+				}
 				arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=1;
+
 			}
 //			cprintf("First page allocated: %p\n",firstpage_alloced);
 			return (void*)(firstpage_alloced);
@@ -88,7 +95,30 @@ void free(void* virtual_address)
 {
 	//TODO: [PROJECT'24.MS2 - #14] [3] USER HEAP [USER SIDE] - free()
 	// Write your code here, remove the panic and write your code
-	panic("free() is not implemented yet...!!");
+	uint32 address=(uint32)virtual_address;
+				//page Alloc
+				if(address>=(myEnv->limit+ PAGE_SIZE)&&address<USER_HEAP_MAX )
+				{
+					address=ROUNDDOWN(address,PAGE_SIZE);
+					int c=arr[(address-USER_HEAP_START)/PAGE_SIZE];
+					uint32 total_size=(uint32)(c*PAGE_SIZE);
+					int r=(address-USER_HEAP_START)/PAGE_SIZE;
+					while(c--)
+					{
+						arr[r]=0;
+						r++;
+					}
+					sys_free_user_mem(address,(uint32)(c*PAGE_SIZE));
+				}
+				//Block alloc
+				else if(address>=USER_HEAP_START&&address<myEnv->limit)
+				{
+					free_block(virtual_address);
+				}
+				else
+				{
+					panic("invalid address!!");
+				}
 }
 
 
