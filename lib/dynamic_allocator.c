@@ -177,7 +177,8 @@ void *alloc_block_FF(uint32 size)
 	if(!size){
 		cprintf("1\n");
 		return NULL;
-	}	size+= 8;
+	}
+	size+= 8;
 
 	if(size < 16){
 		size = 16;
@@ -197,7 +198,7 @@ void *alloc_block_FF(uint32 size)
 		*footer = (ROUNDUP(size,PAGE_SIZE)) & ~(0x1);
 		LIST_INSERT_HEAD(&freeBlocksList,(struct BlockElement*) address);
 	}
-
+	bool last = 0;
 	struct BlockElement *freeBlk;
 	LIST_FOREACH(freeBlk,&freeBlocksList){
 		uint32 blkSize = get_block_size(freeBlk);
@@ -207,7 +208,8 @@ void *alloc_block_FF(uint32 size)
 				void* address = sbrk((ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE);
 				if(address == (void*)-1)
 				{
-					cprintf("3\n");
+//					cprintf("size: %d",size);
+//					print_blocks_list(freeBlocksList);
 					return NULL;
 				}
 				uint32 prevBlockSize = (*((uint32*)(address - 8))) & ~(0x1);
@@ -220,14 +222,22 @@ void *alloc_block_FF(uint32 size)
 				if(is_free_block(prevBlock)){
 					*prevBlockHeader = (prevBlockSize + ((ROUNDUP(size,PAGE_SIZE)) & ~(0x1)));
 					*footer = (prevBlockSize + ((ROUNDUP(size,PAGE_SIZE)) & ~(0x1)));
-					return alloc_block_FF(size-8);
-					//OPTIMIZE THIS
+					last = 1;
+					break;
+					//OPTIMIZE THIS (kind of optimized > last solution)
+					/*
+					 * 2048 size
+					 * sbrk -> limit
+					 * free blocks msh mawguda
+					 *
+					 */
 				}
 				uint32* header = (uint32*)(address - 4);
-				*header = (ROUNDUP(size,PAGE_SIZE)) & (0x1);
-				*footer = (ROUNDUP(size,PAGE_SIZE)) & (0x1);
-
-				continue;
+				*header = (ROUNDUP(size,PAGE_SIZE)) & ~(0x1);
+				*footer = (ROUNDUP(size,PAGE_SIZE)) & ~(0x1);
+				LIST_INSERT_AFTER(&freeBlocksList,freeBlk,(struct BlockElement*)((void*)(header)+4));
+				last=1;
+				break;
 			} else
 				continue;
 		}
@@ -247,7 +257,25 @@ void *alloc_block_FF(uint32 size)
 	}
 
 
-	cprintf("8\n");
+	//trying to optimize
+	if(last){
+		struct BlockElement* freeBlk = LIST_LAST(&freeBlocksList);
+		uint32 blkSize = get_block_size(freeBlk);
+			if(size == blkSize || blkSize-size < 16){
+					set_block_data(freeBlk,blkSize,1);
+					LIST_REMOVE(&freeBlocksList,freeBlk);
+					return freeBlk;
+				}
+				else {
+						struct BlockElement *newFreeBlk = (struct BlockElement*)((void*)freeBlk + size);
+						set_block_data(newFreeBlk,blkSize-size,0);
+						set_block_data(freeBlk,size,1);
+						LIST_INSERT_AFTER(&freeBlocksList,freeBlk,newFreeBlk);
+						LIST_REMOVE(&freeBlocksList,freeBlk);
+						return freeBlk;
+					}
+	}
+
 	return NULL;
 
 }
@@ -328,10 +356,14 @@ void free_block(void *va) {
 
     uint32 *curHeader = (uint32*)(va - 4);
     uint32 curBlockSize = get_block_size(va);
+    if(curBlockSize == 0){
+    	return;
+    }
     uint32 *curfooter = (uint32 *)(va + (curBlockSize) - 8);
 
 
     uint32 *nextHeader = (uint32 *)(va - 4 + curBlockSize);
+
     uint32 nextSize = get_block_size(nextHeader + 1);
     uint32 *nextFooter = (uint32 *)(va + curBlockSize  + nextSize  - 8);
 
@@ -372,7 +404,6 @@ void free_block(void *va) {
     } else {
         uint32 totalSize = nextSize + curBlockSize + prevSize;
         set_block_data(prevBlockElement, totalSize, 0);
-
 
         LIST_REMOVE(&freeBlocksList,nextBlockElement);
 
