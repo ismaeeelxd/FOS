@@ -207,7 +207,8 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
 	// Write your code here, remove the panic and write your code
-	uint32 no_of_pages=ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE;
+	//code #2
+	uint32 no_of_pages=size/PAGE_SIZE;
 		uint32 *ptr_page_table;
 		while(no_of_pages!=0)
 		{
@@ -236,6 +237,47 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - BONUS#3] [3] USER HEAP [KERNEL SIDE] - O(1) free_user_mem
 }
+//code #2
+/*
+ * uint32 i=((virtual_address-USER_HEAP_START)/PAGE_SIZE);
+		uint32 *ptr_page_table=NULL;
+		uint32 count=size/PAGE_SIZE;
+		uint32 address=virtual_address;
+		for(int i=0;i<count;i++)
+		{
+			int r=get_page_table(e->env_page_directory,address,&ptr_page_table);
+			if(r==TABLE_NOT_EXIST)
+			{
+				cprintf("B4\n");
+				ptr_page_table=create_page_table(e->env_page_directory,address);
+			}
+			int p=pt_get_page_permissions(e->env_page_directory,address);
+			//unmark it
+			pt_set_page_permissions(e->env_page_directory,address,0,PERM_AVAILABLE);
+			//unmap it
+			if(get_frame_info(e->env_page_directory,address,&ptr_page_table)!=0)
+			{
+				cprintf("B3\n");
+				unmap_frame(e->env_page_directory,address);
+
+			}
+			//if page is in page file
+			int r2=pf_read_env_page(e,(void*)address);
+			if(r2!=E_PAGE_NOT_EXIST_IN_PF)
+			{
+				cprintf("B1\n");
+				pf_remove_env_page(e,address);
+			}
+			cprintf("B2\n");
+			//if page is in working list
+			env_page_ws_invalidate(e,address);
+			++i;
+			address+=PAGE_SIZE;
+
+		}
+		cprintf("B8\n");
+	return;
+ */
 
 //=====================================
 // 2) FREE USER MEMORY (BUFFERING):

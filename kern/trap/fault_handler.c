@@ -251,16 +251,18 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 //		panic("page_fault_handler().PLACEMENT is not implemented yet...!!");
 		uint32* ex;
 		struct FrameInfo* ptr_frame_info=NULL;
-
+cprintf("1\n");
 		int ret=allocate_frame(&ptr_frame_info);
 		map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_AVAILABLE | PERM_PRESENT|PERM_USER|PERM_WRITEABLE);
-
+		cprintf("2\n");
 		int rtrn = pf_read_env_page(faulted_env,(void*) fault_va);
 		if(rtrn== E_PAGE_NOT_EXIST_IN_PF)
 		{
-			if((fault_va>=USER_HEAP_START&&fault_va<USER_HEAP_MAX)||(fault_va >= USTACKBOTTOM && fault_va < USTACKTOP))
+			cprintf("3\n");
+			if((fault_va>=USER_HEAP_START&&fault_va<=USER_HEAP_MAX)||(fault_va >= USTACKBOTTOM && fault_va <= USTACKTOP))
 			{}else{
-				env_exit();
+				cprintf("4\n");
+				sched_exit_env(faulted_env->env_id);
 				return;
 			}
 		}
@@ -270,10 +272,12 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		if(LIST_SIZE(&faulted_env->page_WS_list)==faulted_env->page_WS_max_size){
 //			struct WorkingSetElement* temp=LIST_LAST(&faulted_env->page_WS_list);
 //			faulted_env->page_last_WS_element=LIST_NEXT(temp);
+			cprintf("5\n");
 			faulted_env->page_last_WS_element = LIST_FIRST(&(faulted_env->page_WS_list));
 
 
 		}else{
+			cprintf("6\n");
 			faulted_env->page_last_WS_element=NULL; /// lw el list is not full
 
 		}
