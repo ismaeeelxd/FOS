@@ -212,7 +212,11 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 		uint32 *ptr_page_table;
 		while(no_of_pages!=0)
 		{
-			get_page_table(e->env_page_directory,virtual_address,&ptr_page_table);
+			int r=get_page_table(e->env_page_directory,virtual_address,&ptr_page_table);
+			if(r==TABLE_NOT_EXIST)
+			{
+				ptr_page_table=create_page_table(e->env_page_directory,virtual_address);
+			}
 			int perm=pt_get_page_permissions(e->env_page_directory,virtual_address);
 
 			/// 1)Unmark the given range in v.mem & phy.mem
@@ -225,13 +229,14 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 				unmap_frame(e->env_page_directory,virtual_address);
 			}
 
-			/// 2)free all pages from page file
+
 			 if(pf_read_env_page(e,(void*)virtual_address)==0)
 			 {
 				 pf_remove_env_page(e,virtual_address);
 			 }
-			 /// 3)Free pages that are resident in the working set from the memory
+
 			 env_page_ws_invalidate(e,virtual_address);
+			 virtual_address += PAGE_SIZE;
 			 no_of_pages--;
 		}
 
