@@ -153,8 +153,8 @@ void* sys_sbrk(int numOfPages)
 			return (void*)tempBrk;
 		}
 	}
-	cprintf("current break: %p\n",env->sbrk);
-	cprintf("current limit: %p\n",env->limit);
+//	cprintf("current break: %p\n",env->sbrk);
+//	cprintf("current limit: %p\n",env->limit);
 		return (void*)-1 ;
 
 
@@ -176,6 +176,8 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	//panic("allocate_user_mem() is not implemented yet...!!");
 	uint32*page_table;
 	uint32 num_pages= (ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE;
+//	cprintf("mallocing for %p size:%d number of pages:%d\n",virtual_address,size,num_pages);
+
 //	cprintf("In allocate user mem with pages: %d\n",num_pages);
 
 //			cprintf("Allocating: %d pages\n",num_pages);
@@ -208,36 +210,48 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
 	// Write your code here, remove the panic and write your code
 	//code #2
-	uint32 no_of_pages=size/PAGE_SIZE;
+		uint32 no_of_pages= size/PAGE_SIZE;
 		uint32 *ptr_page_table;
+/*		cprintf("Freeing for %p",virtual_address);
+
+		}*/
+
 		while(no_of_pages!=0)
 		{
+			 no_of_pages--;
+//			cprintf("Number of pages: %d",no_of_pages);
 			int r=get_page_table(e->env_page_directory,virtual_address,&ptr_page_table);
+			bool notExist = 0;
 			if(r==TABLE_NOT_EXIST)
 			{
+//				cprintf("Table does not exist creating new table for %p\n",virtual_address);
 				ptr_page_table=create_page_table(e->env_page_directory,virtual_address);
 			}
 			int perm=pt_get_page_permissions(e->env_page_directory,virtual_address);
 
 			/// 1)Unmark the given range in v.mem & phy.mem
 			if(perm & PERM_AVAILABLE){
-			pt_set_page_permissions(e->env_page_directory,virtual_address,0,PERM_AVAILABLE);
+//				cprintf("Unmarking the page for %p\n",virtual_address);
+				pt_set_page_permissions(e->env_page_directory,virtual_address,0,PERM_AVAILABLE);
 			}
 
 			if(get_frame_info(e->env_page_directory,virtual_address,&ptr_page_table)!=0)
 			{
+//				cprintf("Unmapping the Frame for %p\n",virtual_address);
+
 				unmap_frame(e->env_page_directory,virtual_address);
 			}
 
 
 			 if(pf_read_env_page(e,(void*)virtual_address)==0)
 			 {
+//				cprintf("Removing env page for %p\n",virtual_address);
+
 				 pf_remove_env_page(e,virtual_address);
 			 }
 
 			 env_page_ws_invalidate(e,virtual_address);
 			 virtual_address += PAGE_SIZE;
-			 no_of_pages--;
 		}
 
 	//TODO: [PROJECT'24.MS2 - BONUS#3] [3] USER HEAP [KERNEL SIDE] - O(1) free_user_mem

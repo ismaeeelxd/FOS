@@ -43,11 +43,7 @@ void* malloc(uint32 size)
 		if(USER_HEAP_MAX <= start + size){
 			return NULL;
 		}
-		/*
-		 *
-		 *
-		 *
-		 */
+
 		int numFreePages =0;
 		uint32 firstpage_alloced=0;
 
@@ -101,6 +97,7 @@ void free(void* virtual_address)
 				{
 					address=ROUNDDOWN(address,PAGE_SIZE);
 					int c=arr[(address-USER_HEAP_START)/PAGE_SIZE];
+					sys_free_user_mem(address,(uint32)(c*PAGE_SIZE));
 					uint32 total_size=(uint32)(c*PAGE_SIZE);
 					int r=(address-USER_HEAP_START)/PAGE_SIZE;
 					while(c--)
@@ -108,7 +105,6 @@ void free(void* virtual_address)
 						arr[r]=0;
 						r++;
 					}
-					sys_free_user_mem(address,(uint32)(c*PAGE_SIZE));
 				}
 				//Block alloc
 				else if(address>=USER_HEAP_START&&address<myEnv->limit)
