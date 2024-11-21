@@ -97,9 +97,9 @@ void free(void* virtual_address)
 				{
 					address=ROUNDDOWN(address,PAGE_SIZE);
 					int c=arr[(address-USER_HEAP_START)/PAGE_SIZE];
-					sys_free_user_mem(address,(uint32)(c*PAGE_SIZE));
 					uint32 total_size=(uint32)(c*PAGE_SIZE);
 					int r=(address-USER_HEAP_START)/PAGE_SIZE;
+					sys_free_user_mem(address,total_size);
 					while(c--)
 					{
 						arr[r]=0;
