@@ -66,9 +66,19 @@ inline struct FrameInfo** create_frames_storage(int numOfFrames)
 {
 	//TODO: [PROJECT'24.MS2 - #16] [4] SHARED MEMORY - create_frames_storage()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("create_frames_storage is not implemented yet");
+//	panic("create_frames_storage is not implemented yet");
 	//Your Code is Here...
-
+	 if (numOfFrames <= 0) {
+	        return NULL;
+	    }
+	void* va=kmalloc(numOfFrames * sizeof(struct FrameInfo*));
+	if(va==NULL)
+		return NULL;
+    struct FrameInfo** framesStorage = (struct FrameInfo**)va;
+    for (int i = 0; i < numOfFrames; i++) {
+            framesStorage[i] = 0;
+        }
+return va;
 }
 
 //=====================================
@@ -81,8 +91,28 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size, uint8 is
 {
 	//TODO: [PROJECT'24.MS2 - #16] [4] SHARED MEMORY - create_share()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("create_share is not implemented yet");
-	//Your Code is Here...
+//	panic("create_share is not implemented yet");
+
+	struct Share* element;
+void* va=kmalloc(sizeof(struct Share));
+	element = (struct Share*)va;
+	if (element == NULL) {
+	    return NULL;
+	}
+
+	element->ID = (uint32)element & 0x7FFFFFFF;  // not sure va or element
+	element->isWritable = isWritable;
+	element->ownerID = ownerID;
+	element->references = 1;
+	element->size = size;
+	strcpy(element->name,shareName);
+	element->framesStorage = create_frames_storage(ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE);
+	if (element->framesStorage == NULL) {
+	    kfree(element);
+	    return NULL;
+	}
+
+	return element;
 
 }
 
@@ -97,8 +127,18 @@ struct Share* get_share(int32 ownerID, char* name)
 {
 	//TODO: [PROJECT'24.MS2 - #17] [4] SHARED MEMORY - get_share()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("get_share is not implemented yet");
+//	panic("get_share is not implemented yet");
 	//Your Code is Here...
+acquire_spinlock(&(AllShares.shareslock));
+struct Share* temp;
+LIST_FOREACH(temp,&(AllShares.shares_list)){
+	if( strcmp(name, temp->name)==0 && temp->ownerID==ownerID){
+		release_spinlock(&(AllShares.shareslock));
+		return temp;
+	}
+}
+release_spinlock(&(AllShares.shareslock));
+	return NULL;
 
 }
 
@@ -125,7 +165,6 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("getSharedObject is not implemented yet");
 	//Your Code is Here...
-
 	struct Env* myenv = get_cpu_proc(); //The calling environment
 }
 

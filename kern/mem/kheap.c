@@ -10,7 +10,7 @@
 
 
 uint32 free_page_count;
-struct FreePage free_pages[(KERNEL_HEAP_MAX - KERNEL_HEAP_START) / (PAGE_SIZE)];  // The array to track free pages
+struct FreePage free_pages[(KERNEL_HEAP_MAX - KERNEL_HEAP_START) / (PAGE_SIZE)];
 
 int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
 {
@@ -108,10 +108,9 @@ void* kmalloc(unsigned int size) {
     // Look for a suitable free block in the free_pages array
     for (uint32 i = 0; i < free_page_count; i++) {
         if (free_pages[i].numOfPagesFreeAfter + 1 >= numPagesNeeded) {
-            // Found a suitable block
             uint32 first_page_allocated = free_pages[i].starting_addr;
 
-            // Allocate pages from the block
+
             for (int j = 0; j < numPagesNeeded; j++) {
                 struct FrameInfo* frameToBeAlloc = NULL;
                 allocate_frame(&frameToBeAlloc);
@@ -121,7 +120,6 @@ void* kmalloc(unsigned int size) {
                 frameToBeAlloc->vir_add = first_page_allocated+(j*PAGE_SIZE);
 	    		if(ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE == numPagesNeeded)
 	    			arr[(first_page_allocated-KERNEL_HEAP_START)/PAGE_SIZE]=numPagesNeeded;            }
-
             // Update the free_pages array
             if (free_pages[i].numOfPagesFreeAfter + 1 == numPagesNeeded) {
                 // Entire block is consumed, remove it
