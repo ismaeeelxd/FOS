@@ -210,8 +210,80 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 {
 	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
 	// Write your code here, remove the panic and write your code
-	panic("sget() is not implemented yet...!!");
-	return NULL;
+//	panic("sget() is not implemented yet...!!");
+//	return NULL;
+	//	 struct BlockElement *b = NULL;
+	//	    uint32 size = sys_getSizeOfSharedObject(ownerEnvID, sharedVarName);
+		cprintf("1661\n");
+		int size = sys_getSizeOfSharedObject(ownerEnvID, sharedVarName);
+		if (size == E_SHARED_MEM_NOT_EXISTS)
+			return NULL;
+
+		if (USER_HEAP_MAX <= myEnv->limit + PAGE_SIZE + size)
+			return NULL;
+
+		uint32 no_OFpages_needed = ROUNDUP((uint32)size, PAGE_SIZE)/PAGE_SIZE;
+
+		// Search for free space using First Fit
+		int numFreePages = 0;
+		uint32 firstpage_alloced = 0;
+		uint32 start = myEnv->limit + PAGE_SIZE;
+
+		// Find consecutive free pages
+		for(uint32 i = start; i < USER_HEAP_MAX; i += PAGE_SIZE) {
+			if(!arr2[(i - USER_HEAP_START)/PAGE_SIZE]) {
+				if(numFreePages == 0)
+					firstpage_alloced = i;
+				numFreePages++;
+				if(numFreePages == no_OFpages_needed) {
+					break;
+				}
+			} else {
+				numFreePages = 0;
+				firstpage_alloced = 0;
+			}
+		}
+
+		// If we don't have enough consecutive free pages
+		if(numFreePages < no_OFpages_needed) {
+			return NULL;
+		}
+
+		// If we found enough space, get the shared object
+		if(numFreePages >= no_OFpages_needed && firstpage_alloced != 0) {
+			int ret = sys_getSharedObject(ownerEnvID, sharedVarName, (void*)firstpage_alloced);
+			if(ret >= 0) {  // Success case - assuming non-negative return means success
+				// Mark the pages as used in our tracking array
+				for(int i = 0; i < no_OFpages_needed; ++i) {
+					if(i == 0) {
+						arr2[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = no_OFpages_needed;
+						continue;
+					}
+					arr2[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = -2;
+				}
+				return (void*)firstpage_alloced;
+			}
+		}
+
+		return NULL;
+	//		if(sys_isUHeapPlacementStrategyFIRSTFIT())
+	//		{
+	//			b=alloc_block_FF(size);
+	//			if(b==NULL)
+	//			{
+	//				return NULL;
+	//			}
+	//			int obj_id=sys_getSharedObject(ownerEnvID,sharedVarName,b);
+	//			if(obj_id==E_SHARED_MEM_NOT_EXISTS)
+	//			{
+	//				return NULL;
+	//			}
+	//			else
+	//				return b;
+	//
+	//		}
+	//		else
+	//			return NULL;
 }
 
 
