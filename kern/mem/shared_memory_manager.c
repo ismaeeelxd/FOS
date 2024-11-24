@@ -149,11 +149,38 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 {
 	//TODO: [PROJECT'24.MS2 - #19] [4] SHARED MEMORY [KERNEL SIDE] - createSharedObject()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("createSharedObject is not implemented yet");
+	//panic("createSharedObject is not implemented yet");
 	//Your Code is Here...
-
 	struct Env* myenv = get_cpu_proc(); //The calling environment
-}
+
+	struct Share* NewCreate = create_share(ownerID, shareName, size, isWritable);
+
+   if (NewCreate == NULL){  // if failed to create a shared object
+	   return E_NO_SHARE;
+   }
+
+   struct Share* checkIfFound= get_share(ownerID,shareName);
+   if (checkIfFound != NULL){   //if the shared object already exists
+	   return E_SHARED_MEM_EXISTS ;
+   }
+
+   acquire_spinlock(&(AllShares.shareslock));
+  LIST_INSERT_HEAD(&(AllShares.shares_list),NewCreate);
+  release_spinlock(&(AllShares.shareslock));
+
+  uint32 numPages= (ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE);
+
+  for (int i=0;i<numPages;i++){
+
+	  struct FrameInfo* ptr_frame_info=NULL;
+	  allocate_frame(&ptr_frame_info);
+  map_frame(myenv->env_page_directory,ptr_frame_info,(uint32)virtual_address,PERM_WRITEABLE);
+  NewCreate->framesStorage[i] = ptr_frame_info;
+    }
+  return ownerID;
+  }
+
+
 
 
 //======================
