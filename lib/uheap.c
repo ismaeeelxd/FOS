@@ -122,6 +122,8 @@ void free(void* virtual_address)
 // [4] ALLOCATE SHARED VARIABLE:
 //=================================
 struct FreePage free_pages[(USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE];
+int arr2[(USER_HEAP_MAX-USER_HEAP_START)/PAGE_SIZE]={0};
+
 uint32 free_page_count;
 void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 {
@@ -131,38 +133,73 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
-
 //	panic("smalloc() is not implemented yet...!!");
-	if(!sys_isUHeapPlacementStrategyFIRSTFIT() && USER_HEAP_MAX <= myEnv->limit+PAGE_SIZE + size)
+	if( USER_HEAP_MAX <= myEnv->limit+PAGE_SIZE + size)
 			return NULL;
 
-//	if(USER_HEAP_MAX <= myEnv->limit+PAGE_SIZE + size)
-//			return NULL;
-	free_page_count = 1;
-	free_pages[0].starting_addr =myEnv-> limit+PAGE_SIZE;
-	free_pages[0].numOfPagesFreeAfter = ((USER_HEAP_MAX - (myEnv-> limit+PAGE_SIZE)) / (PAGE_SIZE)) - 1;
+//	free_page_count = 1;
+//	free_pages[0].starting_addr =myEnv-> limit+PAGE_SIZE;
+//	free_pages[0].numOfPagesFreeAfter = ((USER_HEAP_MAX - (myEnv-> limit+PAGE_SIZE)) / (PAGE_SIZE)) - 1;
 	uint32 no_OFpages_needed=ROUNDUP((uint32)size,PAGE_SIZE)/PAGE_SIZE;
-	for (uint32 i = 0; i < free_page_count; i++) {
-	        if (free_pages[i].numOfPagesFreeAfter + 1 >= no_OFpages_needed) {
-	            uint32 first_page_allocated = free_pages[i].starting_addr;
-	            sys_createSharedObject(sharedVarName,size,isWritable,(void*)first_page_allocated);
-	            if(free_pages[i].numOfPagesFreeAfter+1==no_OFpages_needed)
-	            {
-	            	for(int j=i;j<free_page_count-1;j++)
-	            	{
-	            		free_pages[j]=free_pages[j+1];
-	            	}
-	            		free_page_count--;
-	            }else{
-	            	free_pages[i].numOfPagesFreeAfter-=no_OFpages_needed;
-	            	free_pages[i].starting_addr += no_OFpages_needed * PAGE_SIZE;
+//	        if (free_pages[i].numOfPagesFreeAfter + 1 >= no_OFpages_needed) {
+//	            uint32 first_page_allocated = free_pages[i].starting_addr;
+//	            sys_createSharedObject(sharedVarName,size,isWritable,(void*)first_page_allocated);
+//	            if(free_pages[i].numOfPagesFreeAfter+1==no_OFpages_needed)
+//	            {
+//	            	for(int j=i;j<free_page_count-1;j++)
+//	            	{
+//	            		free_pages[j]=free_pages[j+1];
+//	            	}
+//	            		free_page_count--;
+//	            }else{
+//	            	free_pages[i].numOfPagesFreeAfter-=no_OFpages_needed;
+//	            	free_pages[i].starting_addr += no_OFpages_needed * PAGE_SIZE;
+//
+//	            }
+//	            return (void*)first_page_allocated;
+//	        }
+//
+//
+//	return NULL;
 
-	            }
-	            return (void*)first_page_allocated;
-	        }
-	}
+	int numFreePages =0;
+		uint32 firstpage_alloced=0;
+		uint32 start=myEnv-> limit+PAGE_SIZE;
+			for(uint32 i = start;i<USER_HEAP_MAX;i+=PAGE_SIZE){
+				if(!arr2[(i - USER_HEAP_START)/PAGE_SIZE]){
+						if(numFreePages==0)
+							firstpage_alloced=i;
+					numFreePages++;
+					if(numFreePages == no_OFpages_needed){
+						break;
+					}
+				}else{
 
-	return NULL;
+					 numFreePages =0;
+					 firstpage_alloced=0;
+				}
+			}
+
+			if( numFreePages < no_OFpages_needed){
+				return NULL;
+			}
+
+			if(numFreePages >= no_OFpages_needed && firstpage_alloced != 0){
+				sys_createSharedObject(sharedVarName,size,isWritable,(void*)firstpage_alloced);
+
+				for(int i = 0;i<no_OFpages_needed;++i){
+					if(i==0)
+					{
+						arr2[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=no_OFpages_needed;
+						continue;
+					}
+					arr2[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=-2;
+
+				}
+	//			cprintf("First page allocated: %p\n",firstpage_alloced);
+				return (void*)(firstpage_alloced);
+			}
+			return NULL;
 
 }
 
