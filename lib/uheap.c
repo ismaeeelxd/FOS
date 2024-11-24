@@ -75,7 +75,7 @@ void* malloc(uint32 size)
 					arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=numPagesNeeded;
 					continue;
 				}
-				arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=1;
+				arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=-2;
 
 			}
 //			cprintf("First page allocated: %p\n",firstpage_alloced);
@@ -121,10 +121,10 @@ void free(void* virtual_address)
 //=================================
 // [4] ALLOCATE SHARED VARIABLE:
 //=================================
-struct FreePage free_pages[(USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE];
-int arr2[(USER_HEAP_MAX-USER_HEAP_START)/PAGE_SIZE]={0};
+//struct FreePage free_pages[(USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE];
+//int arr[(USER_HEAP_MAX-USER_HEAP_START)/PAGE_SIZE]={0};
 
-uint32 free_page_count;
+//uint32 free_page_count;
 void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 {
 	//==============================================================
@@ -166,7 +166,7 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 		uint32 firstpage_alloced=0;
 		uint32 start=myEnv-> limit+PAGE_SIZE;
 			for(uint32 i = start;i<USER_HEAP_MAX;i+=PAGE_SIZE){
-				if(!arr2[(i - USER_HEAP_START)/PAGE_SIZE]){
+				if(!arr[(i - USER_HEAP_START)/PAGE_SIZE]){
 						if(numFreePages==0)
 							firstpage_alloced=i;
 					numFreePages++;
@@ -185,15 +185,18 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 			}
 
 			if(numFreePages >= no_OFpages_needed && firstpage_alloced != 0){
-				sys_createSharedObject(sharedVarName,size,isWritable,(void*)firstpage_alloced);
+				uint32 ret = sys_createSharedObject(sharedVarName,size,isWritable,(void*)firstpage_alloced);
+				if(ret == E_SHARED_MEM_EXISTS ||ret == E_NO_SHARE){
+					return NULL;
+				}
 
 				for(int i = 0;i<no_OFpages_needed;++i){
 					if(i==0)
 					{
-						arr2[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=no_OFpages_needed;
+						arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=no_OFpages_needed;
 						continue;
 					}
-					arr2[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=-2;
+					arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=-2;
 
 				}
 	//			cprintf("First page allocated: %p\n",firstpage_alloced);
@@ -214,7 +217,7 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 //	return NULL;
 	//	 struct BlockElement *b = NULL;
 	//	    uint32 size = sys_getSizeOfSharedObject(ownerEnvID, sharedVarName);
-		cprintf("1661\n");
+//		cprintf("1661\n");
 		int size = sys_getSizeOfSharedObject(ownerEnvID, sharedVarName);
 		if (size == E_SHARED_MEM_NOT_EXISTS)
 			return NULL;
@@ -231,35 +234,46 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 
 		// Find consecutive free pages
 		for(uint32 i = start; i < USER_HEAP_MAX; i += PAGE_SIZE) {
-			if(!arr2[(i - USER_HEAP_START)/PAGE_SIZE]) {
+//			cprintf("1\n");
+			if(!arr[(i - USER_HEAP_START)/PAGE_SIZE]) {
+//				cprintf("if 1\n");
+
 				if(numFreePages == 0)
 					firstpage_alloced = i;
 				numFreePages++;
 				if(numFreePages == no_OFpages_needed) {
+//					cprintf("if 2\n");
+
 					break;
 				}
 			} else {
+//				cprintf("else 1\n");
+
 				numFreePages = 0;
 				firstpage_alloced = 0;
 			}
 		}
 
-		// If we don't have enough consecutive free pages
 		if(numFreePages < no_OFpages_needed) {
+//			cprintf("null test\n");
 			return NULL;
 		}
 
 		// If we found enough space, get the shared object
 		if(numFreePages >= no_OFpages_needed && firstpage_alloced != 0) {
+//			cprintf("if 4\n");
 			int ret = sys_getSharedObject(ownerEnvID, sharedVarName, (void*)firstpage_alloced);
+//			cprintf("bnygy?\n");
 			if(ret >= 0) {  // Success case - assuming non-negative return means success
 				// Mark the pages as used in our tracking array
 				for(int i = 0; i < no_OFpages_needed; ++i) {
+//					cprintf("2\n");
+
 					if(i == 0) {
-						arr2[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = no_OFpages_needed;
+						arr[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = no_OFpages_needed;
 						continue;
 					}
-					arr2[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = -2;
+					arr[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = -2;
 				}
 				return (void*)firstpage_alloced;
 			}

@@ -78,7 +78,7 @@ inline struct FrameInfo** create_frames_storage(int numOfFrames)
     for (int i = 0; i < numOfFrames; i++) {
             framesStorage[i] = 0;
         }
-return va;
+    return va;
 }
 
 //=====================================
@@ -94,7 +94,7 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size, uint8 is
 //	panic("create_share is not implemented yet");
 
 	struct Share* element;
-void* va=kmalloc(PAGE_SIZE);
+	void* va=kmalloc(PAGE_SIZE);
 	element = (struct Share*)va;
 	if (element == NULL) {
 	    return NULL;
@@ -134,18 +134,18 @@ struct Share* get_share(int32 ownerID, char* name)
 	    }
 	struct Share* res=NULL;
 
-struct Share* temp=NULL;
-acquire_spinlock(&(AllShares.shareslock));
-LIST_FOREACH(temp,&(AllShares.shares_list)){
-	cprintf("name:%s,  temo=>name:%s \n",name,temp->name);
+	struct Share* temp=NULL;
+	acquire_spinlock(&(AllShares.shareslock));
+	LIST_FOREACH(temp,&(AllShares.shares_list)){
+//	cprintf("name:%s,  temo=>name:%s \n",name,temp->name);
 	if( strcmp(name, temp->name)==0 && temp->ownerID==ownerID){
-		cprintf("1\n: %p: \n",temp);
+//		cprintf("1\n: %p: \n",temp);
 
 		 res=temp;
 		 break;
 	}
 }
-release_spinlock(&(AllShares.shareslock));
+	release_spinlock(&(AllShares.shareslock));
 	return res;
 
 }
@@ -161,14 +161,14 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 	//Your Code is Here...
 	struct Env* myenv = get_cpu_proc(); //The calling environment
    struct Share* checkIfFound= get_share(ownerID,shareName);
-   cprintf("isfound: %p\n",checkIfFound);
+//   cprintf("isfound: %p\n",checkIfFound);
    if (checkIfFound != NULL){
 	   return E_SHARED_MEM_EXISTS ;
    }
 
 	struct Share* NewCreate = create_share(ownerID, shareName, size, isWritable);
 
-  if (NewCreate == NULL){  // if failed to create a shared object
+  if (NewCreate == NULL){
 	   return E_NO_SHARE;
   }
    acquire_spinlock(&(AllShares.shareslock));
@@ -200,7 +200,10 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	//panic("getSharedObject is not implemented yet");
 	//Your Code is Here...
 	struct Env* myenv = get_cpu_proc(); //The calling environment
+//	cprintf("abl getshare\n");
 	struct Share* s=get_share(ownerID,shareName);
+//	cprintf("b3d getshare\n");
+
 		if(s->ID==E_SHARED_MEM_NOT_EXISTS)
 		{
 			cprintf("11\n");
@@ -211,18 +214,32 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 		uint32 *ptr_page_table ;
 		for(int i=0;i<num_of_pages;i++)
 		{
-			 struct FrameInfo* sa=get_frame_info((uint32 *)s->framesStorage,(uint32)i* PAGE_SIZE,&ptr_page_table);
+			//ismail virtual address adjusting in the frameinfo
+//			cprintf("test %d\n",i);
+
+			 struct FrameInfo* sa= s->framesStorage[i];
+//			cprintf("111111\n");
+//			 if(sa==0){
+//				 return E_SHARED_MEM_NOT_EXISTS;
+//			 }
 			 if(s->isWritable)
 			 {
+//				 cprintf("writable\n");
+
 				 map_frame(page_directory,sa,(uint32)(virtual_address+(i*PAGE_SIZE)),PERM_PRESENT|PERM_USER|PERM_WRITEABLE);
+//				 cprintf("test????????????\n");
+				 sa->references++;
 			 }
 			 else
 			 {
+//				 cprintf("else not writable\n");
+
 				 map_frame(page_directory,sa,(uint32)(virtual_address+(i*PAGE_SIZE)),PERM_PRESENT|PERM_USER);
+				 sa->references++; // ismail
 			 }
 		}
 		s->references++;
-		cprintf("5\n");
+//		cprintf("5\n");
 		return s->ID;
 }
 
