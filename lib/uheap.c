@@ -131,7 +131,7 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
-<<<<<<< HEAD
+
 //	panic("smalloc() is not implemented yet...!!");
 	if(!sys_isUHeapPlacementStrategyFIRSTFIT() && USER_HEAP_MAX <= myEnv->limit+PAGE_SIZE + size)
 			return NULL;
@@ -163,9 +163,7 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	}
 
 	return NULL;
-=======
-	panic("smalloc() is not implemented yet...!!");
->>>>>>> 307b9f2656f9990c7ab42a818ebd295b3e010d33
+
 }
 
 //========================================
