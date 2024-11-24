@@ -115,8 +115,7 @@ void* kmalloc(unsigned int size) {
             for (int j = 0; j < numPagesNeeded; j++) {
                 struct FrameInfo* frameToBeAlloc = NULL;
                 allocate_frame(&frameToBeAlloc);
-                map_frame(dir, frameToBeAlloc,
-                          first_page_allocated + (j * PAGE_SIZE),
+                map_frame(dir, frameToBeAlloc,first_page_allocated + (j * PAGE_SIZE),
                           PERM_WRITEABLE | PERM_PRESENT);
                 frameToBeAlloc->vir_add = first_page_allocated+(j*PAGE_SIZE);
 	    		if(ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE == numPagesNeeded)

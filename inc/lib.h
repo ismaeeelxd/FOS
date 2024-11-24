@@ -109,7 +109,10 @@ int 	sys_check_LRU_lists_free(uint32* list_content, int list_size);
 int 	sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 last_WS_element_content, bool chk_in_order);
 //2024
 void 	sys_utilities(char* utilityName, int value);
-
+struct FreePage {
+    uint32 starting_addr;
+    uint32 numOfPagesFreeAfter;
+};
 /* concurrency.c */
 void env_sleep(uint32 apprxMilliSeconds);
 uint32 busy_wait(uint32 loopMax);

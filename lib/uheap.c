@@ -121,6 +121,8 @@ void free(void* virtual_address)
 //=================================
 // [4] ALLOCATE SHARED VARIABLE:
 //=================================
+struct FreePage free_pages[(USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE];
+uint32 free_page_count;
 void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 {
 	//==============================================================
@@ -129,7 +131,36 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
-	panic("smalloc() is not implemented yet...!!");
+//	panic("smalloc() is not implemented yet...!!");
+	if(!sys_isUHeapPlacementStrategyFIRSTFIT() && USER_HEAP_MAX <= myEnv->limit+PAGE_SIZE + size)
+			return NULL;
+
+//	if(USER_HEAP_MAX <= myEnv->limit+PAGE_SIZE + size)
+//			return NULL;
+	free_page_count = 1;
+	free_pages[0].starting_addr =myEnv-> limit+PAGE_SIZE;
+	free_pages[0].numOfPagesFreeAfter = ((USER_HEAP_MAX - (myEnv-> limit+PAGE_SIZE)) / (PAGE_SIZE)) - 1;
+	uint32 no_OFpages_needed=ROUNDUP((uint32)size,PAGE_SIZE)/PAGE_SIZE;
+	for (uint32 i = 0; i < free_page_count; i++) {
+	        if (free_pages[i].numOfPagesFreeAfter + 1 >= no_OFpages_needed) {
+	            uint32 first_page_allocated = free_pages[i].starting_addr;
+	            sys_createSharedObject(sharedVarName,size,isWritable,(void*)first_page_allocated);
+	            if(free_pages[i].numOfPagesFreeAfter+1==no_OFpages_needed)
+	            {
+	            	for(int j=i;j<free_page_count-1;j++)
+	            	{
+	            		free_pages[j]=free_pages[j+1];
+	            	}
+	            		free_page_count--;
+	            }else{
+	            	free_pages[i].numOfPagesFreeAfter-=no_OFpages_needed;
+	            	free_pages[i].starting_addr += no_OFpages_needed * PAGE_SIZE;
+
+	            }
+	            return (void*)first_page_allocated;
+	        }
+	}
+
 	return NULL;
 }
 
