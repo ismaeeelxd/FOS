@@ -235,12 +235,6 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 				pt_set_page_permissions(e->env_page_directory,virtual_address,0,PERM_AVAILABLE);
 			}
 
-			if(get_frame_info(e->env_page_directory,virtual_address,&ptr_page_table)!=0)
-			{
-//				cprintf("Unmapping the Frame for %p\n",virtual_address);
-
-				unmap_frame(e->env_page_directory,virtual_address);
-			}
 
 
 			 if(pf_read_env_page(e,(void*)virtual_address)==0)
@@ -249,8 +243,27 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 				 pf_remove_env_page(e,virtual_address);
 			 }
+			 struct FrameInfo* frame = get_frame_info(e->env_page_directory,virtual_address,&ptr_page_table);
+			if(frame!=0)
+			{
+//				cprintf("Unmapping the Frame for %p\n",virtual_address);
 
-			 env_page_ws_invalidate(e,virtual_address);
+//				unmap_frame(e->env_page_directory,virtual_address);
+				struct WorkingSetElement* ptr_WS_element =frame->ws;
+//				struct WorkingSetElement* ptr_tmp_WS_element = LIST_FIRST(&(e->SecondList));
+				unmap_frame(e->env_page_directory, ptr_WS_element->virtual_address);
+
+				if (e->page_last_WS_element == ptr_WS_element)
+				{
+					e->page_last_WS_element = LIST_NEXT(ptr_WS_element);
+				}
+				LIST_REMOVE(&(e->page_WS_list), ptr_WS_element);
+
+				kfree(ptr_WS_element);
+
+			}
+//			 env_page_ws_invalidate(e,virtual_address);
+
 			 virtual_address += PAGE_SIZE;
 		}
 

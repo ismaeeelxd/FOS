@@ -212,6 +212,7 @@ struct FrameInfo {
 	// boot_allocate_space do not have valid reference count fields.
 	uint16 references;
 	struct Env *proc;
+	struct WorkingSetElement* ws;
 	uint32 bufferedVA;
 	uint32 vir_add;
 	unsigned char isBuffered;
