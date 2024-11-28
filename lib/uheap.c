@@ -320,9 +320,67 @@ void sfree(void* virtual_address)
 {
 	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
 	// Write your code here, remove the panic and write your code
-	panic("sfree() is not implemented yet...!!");
-}
+	//panic("sfree() is not implemented yet...!!");
 
+	int32 id=sys_getSharedid(virtual_address);
+	sys_freeSharedObject(id, virtual_address);
+	free(virtual_address);
+	//	 const uint32 mask = 0x7FFFFFFF;
+//	    int32 id = (int32)((uint32)virtual_address & mask);
+//	    sys_freeSharedObject(id, virtual_address);
+//	    uint32* page_directory = myEnv->env_page_directory;
+//	    uint32* page_table = NULL;
+//	    struct FrameInfo* frame_info = get_frame_info(page_directory, (uint32)virtual_address, &page_table);
+//
+//	    //int num_of_pages=ROUNDUP(s->size,PAGE_SIZE)/PAGE_SIZE;
+//	    if (frame_info == NULL) {
+//	           cprintf("sfree: Invalid virtual address, no frame found\n");
+//	           return;
+//	       }
+//		struct Share* res=NULL;
+//		struct Share* temp=NULL;
+//		for (int i=0;i<100;i++)
+//		{
+//
+//		}
+//		LIST_FOREACH(temp,&(AllShares.shares_list)){
+//		if( temp->prev_next_info.le_next==frame_info->prev_next_info.le_next){
+//             res=temp;
+//			 break;
+//		}
+//	}
+////	       // Step 2: Find the shared object ID associated with this frame
+////	       int shared_object_id = frame_info->prev_next_info; // Assuming frame_info tracks shared_object_id
+////	       if (shared_object_id == -1) {
+////	           cprintf("sfree: Virtual address not associated with a shared object\n");
+////	           return;
+////	       }
+//
+//	       // Step 3: Call sys_freeSharedObject to free the shared object
+//	       int result = sys_freeSharedObject(res->ID, virtual_address);
+//	       if (result < 0) {
+//	           cprintf("sfree: Failed to free shared object, error code: %d\n", result);
+//	           return;
+//	       }
+//
+//	       cprintf("sfree: Successfully freed shared object ID: %d\n", shared_object_id);
+//	    //uint32 *page_directory=myenv->env_page_directory;
+//	   // uint32 *ptr_page_table ;
+////	    for(int i=0;i<num_of_pages;i++)
+////	    {
+////	    			 struct FrameInfo* sa= s->framesStorage[i];
+////	    //			 if(sa==0){
+////	    //				 return E_SHARED_MEM_NOT_EXISTS;
+////	    //			 }
+////
+////	    		}
+////	  //  myEnv=cur_env->env_parent_id;
+//////curenv->env_parent_id;
+////	   // (int32) ((uint32)virtual_address & 0x7FFFFFFF)
+////	   // sys_freeSharedObject(myEnv,virtual_address);
+//	    free(virtual_address);
+
+}
 
 //=================================
 // REALLOC USER SPACE:

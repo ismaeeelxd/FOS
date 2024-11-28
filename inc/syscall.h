@@ -26,6 +26,7 @@ enum
 	SYS_move_user_mem,
 	SYS_clearFFL,
 	SYS_create_shared_object,
+	SYS_getSharedid,
 	SYS_get_size_of_shared_object,
 	SYS_get_shared_object,
 	SYS_free_shared_object,
