@@ -156,19 +156,19 @@ void fault_handler(struct Trapframe *tf)
 			perms = pt_get_page_permissions(faulted_env->env_page_directory, fault_va);
 
 			 if (fault_va >= USER_LIMIT) {
-//			    cprintf("USER LIMIT ENV EXIT\n");
+			    cprintf("USER LIMIT ENV EXIT\n");
 
 			    env_exit();
 			}
 			else if ((perms & PERM_WRITEABLE) || (perms & PERM_PRESENT)) {
-//		    	cprintf("PERM_WRITEABLE/PRESENT BIT ENV EXIT\n");
+		    	cprintf("PERM_WRITEABLE/PRESENT BIT ENV EXIT\n");
 
 			    env_exit();
 			}
 
 			else if (fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX) {
 			    if (!(perms & PERM_AVAILABLE)) {
-//			    	cprintf("PERM_AVALIABLE BIT ENV EXIT\n");
+			    	cprintf("PERM_AVALIABLE BIT ENV EXIT\n");
 			        env_exit();
 			    }
 			}

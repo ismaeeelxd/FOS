@@ -137,30 +137,8 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	if( USER_HEAP_MAX <= myEnv->limit+PAGE_SIZE + size)
 			return NULL;
 
-//	free_page_count = 1;
-//	free_pages[0].starting_addr =myEnv-> limit+PAGE_SIZE;
-//	free_pages[0].numOfPagesFreeAfter = ((USER_HEAP_MAX - (myEnv-> limit+PAGE_SIZE)) / (PAGE_SIZE)) - 1;
 	uint32 no_OFpages_needed=ROUNDUP((uint32)size,PAGE_SIZE)/PAGE_SIZE;
-//	        if (free_pages[i].numOfPagesFreeAfter + 1 >= no_OFpages_needed) {
-//	            uint32 first_page_allocated = free_pages[i].starting_addr;
-//	            sys_createSharedObject(sharedVarName,size,isWritable,(void*)first_page_allocated);
-//	            if(free_pages[i].numOfPagesFreeAfter+1==no_OFpages_needed)
-//	            {
-//	            	for(int j=i;j<free_page_count-1;j++)
-//	            	{
-//	            		free_pages[j]=free_pages[j+1];
-//	            	}
-//	            		free_page_count--;
-//	            }else{
-//	            	free_pages[i].numOfPagesFreeAfter-=no_OFpages_needed;
-//	            	free_pages[i].starting_addr += no_OFpages_needed * PAGE_SIZE;
-//
-//	            }
-//	            return (void*)first_page_allocated;
-//	        }
-//
-//
-//	return NULL;
+	cprintf("Allocating size for %s: %d\n",sharedVarName,size);
 
 	int numFreePages =0;
 		uint32 firstpage_alloced=0;
@@ -185,6 +163,7 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 			}
 
 			if(numFreePages >= no_OFpages_needed && firstpage_alloced != 0){
+				cprintf("Starting from address: %p\n",firstpage_alloced);
 				uint32 ret = sys_createSharedObject(sharedVarName,size,isWritable,(void*)firstpage_alloced);
 				if(ret == E_SHARED_MEM_EXISTS ||ret == E_NO_SHARE){
 					return NULL;
@@ -322,9 +301,31 @@ void sfree(void* virtual_address)
 	// Write your code here, remove the panic and write your code
 	//panic("sfree() is not implemented yet...!!");
 
-	int32 id=sys_getSharedid(virtual_address);
-	sys_freeSharedObject(id, virtual_address);
-	free(virtual_address);
+	int32 id = sys_getSharedid(virtual_address);
+		if(id == E_SHARED_MEM_NOT_EXISTS){
+			return;
+		}
+			cprintf("Freeing @ %p\n",virtual_address);
+
+			uint32 address=(uint32)virtual_address;
+				//page Alloc
+				if(address>=(myEnv->limit+ PAGE_SIZE)&&address<USER_HEAP_MAX )
+				{
+					address=ROUNDDOWN(address,PAGE_SIZE);
+					int c=arr[(address-USER_HEAP_START)/PAGE_SIZE];
+					uint32 total_size=(uint32)(c*PAGE_SIZE);
+					int r=(address-USER_HEAP_START)/PAGE_SIZE;
+					uint32 ret = sys_freeSharedObject(id, virtual_address);
+					if(ret == E_SHARED_MEM_NOT_EXISTS){
+						return;
+					}
+					while(c--)
+					{
+						arr[r]=0;
+						r++;
+					}
+				}
+
 	//	 const uint32 mask = 0x7FFFFFFF;
 //	    int32 id = (int32)((uint32)virtual_address & mask);
 //	    sys_freeSharedObject(id, virtual_address);

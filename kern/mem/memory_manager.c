@@ -219,6 +219,7 @@ void free_frame(struct FrameInfo *ptr_frame_info)
 //
 void decrement_references(struct FrameInfo* ptr_frame_info)
 {
+//	cprintf("references of va %p is %d\n",ptr_frame_info->vir_add,ptr_frame_info->references);
 	if (--(ptr_frame_info->references) == 0)
 		free_frame(ptr_frame_info);
 }

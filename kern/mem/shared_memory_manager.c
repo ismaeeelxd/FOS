@@ -171,20 +171,23 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
   if (NewCreate == NULL){
 	   return E_NO_SHARE;
   }
-//   acquire_spinlock(&(AllShares.shareslock));
+   acquire_spinlock(&(AllShares.shareslock));
   LIST_INSERT_TAIL(&(AllShares.shares_list),NewCreate);
- // release_spinlock(&(AllShares.shareslock));
+  release_spinlock(&(AllShares.shareslock));
 
   uint32 numPages= (ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE);
 
   for (int i=0;i<numPages;i++){
 
 	 struct FrameInfo* ptr_frame_info=NULL;
+	 cprintf("Allocating frame\n");
 	 allocate_frame(&ptr_frame_info);
-	 map_frame(myenv->env_page_directory,ptr_frame_info,(uint32)(virtual_address+i*PAGE_SIZE), PERM_WRITEABLE | PERM_USER);
+	 cprintf("Mapping va %p to %s\n",(uint32)(virtual_address+(i*PAGE_SIZE)),shareName);
+	 map_frame(myenv->env_page_directory,ptr_frame_info,(uint32)(virtual_address+(i*PAGE_SIZE)), PERM_PRESENT | PERM_WRITEABLE | PERM_USER);
 	 NewCreate->framesStorage[i] = ptr_frame_info;
     }
-  return NewCreate->ID ;
+	  cprintf("NEW SHARE CREATED CALLED %s WITH ID %d\n",shareName,NewCreate->ID);
+	  return NewCreate->ID ;
   }
 
 //======================
@@ -203,7 +206,7 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 
 		if(s->ID==E_SHARED_MEM_NOT_EXISTS)
 		{
-			cprintf("11\n");
+//			cprintf("11\n");
 			return E_SHARED_MEM_NOT_EXISTS;
 		}
 		int num_of_pages=ROUNDUP(s->size,PAGE_SIZE)/PAGE_SIZE;
@@ -222,17 +225,18 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 			 if(s->isWritable)
 			 {
 //				 cprintf("writable\n");
-
+				 cprintf("Mapping va %p to %s\n",(uint32)(virtual_address+(i*PAGE_SIZE)),shareName);
 				 map_frame(page_directory,sa,(uint32)(virtual_address+(i*PAGE_SIZE)),PERM_PRESENT|PERM_USER|PERM_WRITEABLE);
 //				 cprintf("test????????????\n");
-				 sa->references++;
+//				 sa->references++;
 			 }
 			 else
 			 {
 //				 cprintf("else not writable\n");
+				 cprintf("Mapping va %p to %s\n",(uint32)(virtual_address+(i*PAGE_SIZE)),shareName);
 
 				 map_frame(page_directory,sa,(uint32)(virtual_address+(i*PAGE_SIZE)),PERM_PRESENT|PERM_USER);
-				 sa->references++; // ismail
+//				 sa->references++; // ismail
 			 }
 		}
 		s->references++;
@@ -257,31 +261,37 @@ void free_share(struct Share* ptrShare)
 	//Your Code is Here...
 	if (ptrShare == NULL)
 	{
-		   cprintf("89\n");
-
 	   return;
     }
-	   cprintf("k\n");
-//ptrShare->framesStorage
-	 uint32 num_of_pages = ROUNDUP(ptrShare->size, PAGE_SIZE) / PAGE_SIZE;
-	 for (uint32 i = 0; i < num_of_pages; i++)
-	  {
-	    if (ptrShare->framesStorage[i] != NULL)
-	     {
-	    	ptrShare->framesStorage[i]=0;
-	        // free_frame(ptrShare->framesStorage[i]);
-	     }
-	  }
-	   cprintf("99\n");
+//	 cprintf("free share test 1\n");
+
+//	 uint32 num_of_pages = ROUNDUP(ptrShare->size, PAGE_SIZE) / PAGE_SIZE;
+//	 for (uint32 i = 0; i < num_of_pages; i++)
+//	  {
+//	    if (ptrShare->framesStorage[i]->references>0)
+//	     {
+//	    		free_frame(ptrShare->framesStorage[i]);
+//	    		ptrShare->framesStorage[i]=NULL;
+//	     }
+//
+//	  }
+//	   cprintf("99\n");
 
  // Free_framesStorage_array
-
-	 kfree(ptrShare->framesStorage);
+	 cprintf("Removing shared object %s\n",ptrShare->name);
+	 kfree((void*)(ptrShare->framesStorage));
 
  // Remove_share
+	acquire_spinlock(&(AllShares.shareslock));
+
      LIST_REMOVE(&(AllShares.shares_list), ptrShare);
+
+     release_spinlock(&(AllShares.shareslock));
+
  // Free_object
-	 kfree(ptrShare);
+	 kfree((void*)ptrShare);
+	tlbflush();
+
 
 
 }
@@ -296,65 +306,72 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
 	//Your Code is Here...
 //	if(sharedObjectID==E_SHARED_MEM_NOT_EXISTS)
 //		return 0;
-	struct Share* targetShare = NULL;
-		 struct Share *res=NULL;
+		struct Share* targetShare = NULL;
+		struct Share *res=NULL;
 	    // Get shared object
+
+//		acquire_spinlock(&(AllShares.shareslock));
 		 LIST_FOREACH(targetShare, &(AllShares.shares_list))
 		 {
-			 cprintf("targetid: %p ,shatedid: %p\n",targetShare->ID,sharedObjectID);
 		   if (targetShare->ID == sharedObjectID)
 		   {
-			   cprintf("1111\n");
-			   res=targetShare;
+			   	   cprintf("Found target share Id: %d\n",targetShare->ID);
+			   	   cprintf("Object name is %s\n",targetShare->name);
+			   	   res=targetShare;
 		            break;
 		   }
 		 }
+//	     release_spinlock(&(AllShares.shareslock));
+
 
 		 if (res == NULL)
 		 {
-			 cprintf("d\n");
-		         return E_SHARED_MEM_NOT_EXISTS;
+			 return E_SHARED_MEM_NOT_EXISTS;
 		 }
 		 struct Env* myenv = get_cpu_proc(); // The calling environment
 		 uint32* page_directory = myenv->env_page_directory;
-		 uint32 num_of_pages = ROUNDUP(res->size, PAGE_SIZE) / PAGE_SIZE;
+		 uint32 num_of_pages = res->size/PAGE_SIZE;
 		 for (uint32 i = 0; i < num_of_pages; i++)
 		 {
-			 cprintf("h\n");
+			 	 uint32* page_table=NULL;
 		         void* sa = (void*)((uint32)startVA + (i * PAGE_SIZE));
+		         cprintf("Freeing va: %p\n",sa);
 		         unmap_frame(page_directory, (uint32)sa);
-		         //
-//		         cprintf("g\n");
-//		         uint32* page_table=NULL;
-//		         int isEmpty=1;
-//		         get_page_table(page_directory,(uint32)sa,&page_table);
-//		         if(page_table!=NULL)
-//		         {
-//		        	           for(int z=0;z<1024;z++)
-//		        	 				{
-//		        	 					if(page_table[z]!=0)
-//		        	 					{
-//		        	 						isEmpty=0;
-//		        	 						break;
-//		        	 					}
-//		        	 				}
-//		        	           if(isEmpty==1){
-//		        	           	    			kfree(page_table);
-//
-//		        	           	    		    }
-//
-//		         }
+		         get_page_table(page_directory,(uint32)sa,&page_table);
+		         bool isEmpty=1;
+
+		         if(page_table){
+					 pt_clear_page_table_entry(page_directory, (uint32)sa);
+
+		        	 for(int z=0;z<1024;z++)
+		        	 {
+
+						 if(page_table[z]!=0)
+						 {
+							 isEmpty=0;
+							 break;
+						 }
+					}
+						 if(isEmpty==1){
+							 cprintf("PAGE TABLE OF %p is EMPTY\n",sa);
+							 cprintf("FREEING PAGE TABLE ADDRESS: %p\n",page_table);
+							 pd_clear_page_dir_entry(page_directory, (uint32)sa);
+							 kfree((void*)page_table);
+
+		        	 }
+
+		         }
 
 		 }
+
 		 res->references--;
-		 //if refree not zero(!last reference)
-		 if (res->references > 0)
+
+		 if (res->references == 0)
 		 {
-			 cprintf("q\n");
+			 	free_share(res);
 		        return 0;
 		 }
-		 cprintf("eee\n");
-		 free_share(res);
+
 		 tlbflush();
 		 return 0;
 
@@ -372,9 +389,11 @@ int32 getSharedid(void* virtual_address)
 	 struct FrameInfo* frame_info = get_frame_info(page_directory, (uint32)virtual_address, &page_table);
 	 struct Share* tempShare = NULL;
 	    uint32 va = (uint32)virtual_address;
+//		acquire_spinlock(&(AllShares.shareslock));
+
 	    LIST_FOREACH(tempShare, &(AllShares.shares_list))
 	    {
-	        uint32 num_of_pages = ROUNDUP(tempShare->size, PAGE_SIZE) / PAGE_SIZE;
+	        uint32 num_of_pages = tempShare->size / PAGE_SIZE;
 	        for (uint32 i = 0; i < num_of_pages; i++)
 	        {
 	            if (tempShare->framesStorage[i] != NULL)
@@ -386,6 +405,8 @@ int32 getSharedid(void* virtual_address)
 	            }
 	        }
 	    }
+//	     release_spinlock(&(AllShares.shareslock));
+
 
 	    return E_SHARED_MEM_NOT_EXISTS;
 }

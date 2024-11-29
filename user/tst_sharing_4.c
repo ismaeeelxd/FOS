@@ -67,26 +67,27 @@ _main(void)
 		x = smalloc("x", PAGE_SIZE, 1);
 
 		if(x == NULL)
-		{is_correct = 0; cprintf("Wrong free: make sure that you free the shared object by calling free_share_object()");}
+		{is_correct = 0; cprintf("Wrong free: make sure that you free the shared object by calling free_share_object()\n");}
 
 		expected = 2+1 ; /*2pages +1table*/
 		diff = (freeFrames - sys_calculate_free_frames());
 		if (diff < expected || diff > expected +1+1 /*extra 1 page & 1 table for sbrk (at max)*/)
-			{is_correct = 0; cprintf("Wrong previous free: make sure that you correctly free shared object before (Step A)");}
+			{cprintf("diff: %d expected: %d\n",diff,expected);
+			is_correct = 0; cprintf("Wrong previous free: make sure that you correctly free shared object before (Step A)\n");}
 
 		sfree(z);
 
 		expected = 1+1 ; /*1page +1table*/
 		diff = (freeFrames - sys_calculate_free_frames());
 		if (diff !=  expected)
-		{is_correct = 0; cprintf("Wrong free: revise your freeSharedObject logic. Expected = %d, Actual = %d", expected, (freeFrames - sys_calculate_free_frames()));}
+		{is_correct = 0; cprintf("Wrong free: revise your freeSharedObject logic. Expected = %d, Actual = %d\n", expected, (freeFrames - sys_calculate_free_frames()));}
 
 		sfree(x);
 
 		expected = 0;
 		diff = (freeFrames - sys_calculate_free_frames());
 		if (diff !=  expected)
-		{is_correct = 0; cprintf("Wrong free: revise your freeSharedObject logic. Expected = %d, Actual = %d", expected, (freeFrames - sys_calculate_free_frames()));}
+		{is_correct = 0; cprintf("Wrong free: revise your freeSharedObject logic. Expected = %d, Actual = %d\n", expected, (freeFrames - sys_calculate_free_frames()));}
 
 	}
 	cprintf("Step B completed!!\n\n\n");
