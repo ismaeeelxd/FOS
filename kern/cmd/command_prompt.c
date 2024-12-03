@@ -454,7 +454,8 @@ int execute_command(char *command_string)
 
 
 
-//+++++++++++++++++++++++++++ helper Funcation for Proccess Command
+//+++++++++++++++++++++++++++ helper Funcation for Proccess Command++++++++++++
+
 bool isEqualName(char*arguments,int i){
 	return strcmp(arguments, commands[i].name) == 0;
 }
@@ -505,7 +506,7 @@ void handleUnEqual(int i,char*arguments){
 }
 
 
-int saba7Elkher(){
+int checkedInvaild(){
 	int size = LIST_SIZE(&foundCommands);
 	            if(size==0){
 	                return CMD_INVALID;
@@ -536,7 +537,7 @@ int num_act_args=number_of_arguments-1;
 
              }
     }
-           return saba7Elkher();
+           return checkedInvaild();
 
 
 }

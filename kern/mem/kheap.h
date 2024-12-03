@@ -6,9 +6,6 @@
 #endif
 
 #include <inc/types.h>
-//#include <inc/queue.h>
-#include <inc/memlayout.h>
-#include <inc/dynamic_allocator.h>
 
 
 /*2017*/
@@ -35,7 +32,6 @@ static inline uint8 isKHeapPlacementStrategyWORSTFIT(){if(_KHeapPlacementStrateg
 //***********************************
 
 void* kmalloc(unsigned int size);
-void* kmalloc_with_dir(uint32 size, uint32*dir);
 void kfree(void* virtual_address);
 void *krealloc(void *virtual_address, unsigned int new_size);
 
@@ -54,9 +50,5 @@ struct FreePage {
     uint32 starting_addr;
     uint32 numOfPagesFreeAfter;
 };
-
-void add_free_block(uint32 addr, uint32 num_pages);
-
-
 
 #endif // FOS_KERN_KHEAP_H_

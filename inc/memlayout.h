@@ -153,6 +153,8 @@
 #define USTABDATA	(PTSIZE / 2)
 
 //2016
+#define PGFLTEMP (UTEMP-PAGE_SIZE)
+
 #define KERNEL_HEAP_START 0xF6000000
 #define KERNEL_HEAP_MAX 0xFFFFF000
 //KHEAP pages number
@@ -203,19 +205,19 @@ LIST_HEAD(FrameInfo_List, FrameInfo);
 typedef LIST_ENTRY(FrameInfo) Page_LIST_entry_t;
 
 struct FrameInfo {
-	/* free list link */
-	Page_LIST_entry_t prev_next_info;
+	 /* free list link */
+	    Page_LIST_entry_t prev_next_info;
 
-	// references is the count of pointers (usually in page table entries)
-	// to this page, for frames allocated using allocate_frame.
-	// frames allocated at boot time using memory_manager.c's
-	// boot_allocate_space do not have valid reference count fields.
-	uint16 references;
-	struct Env *proc;
-	struct WorkingSetElement* ws;
-	uint32 bufferedVA;
-	uint32 vir_add;
-	unsigned char isBuffered;
+	    // references is the count of pointers (usually in page table entries)
+	    // to this page, for frames allocated using allocate_frame.
+	    // frames allocated at boot time using memory_manager.c's
+	    // boot_allocate_space do not have valid reference count fields.
+	    uint16 references;
+	    struct Env* proc;
+	    struct WorkingSetElement* ws;
+	    uint32 bufferedVA;
+	    uint32 vir_add;
+	    unsigned char isBuffered;
 };
 
 #endif /* !__ASSEMBLER__ */

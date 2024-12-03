@@ -14,25 +14,23 @@
 /// Dealing with environment working set
 #if USE_KHEAP
 
- inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, uint32 virtual_address)
+inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, uint32 virtual_address)
 {
-    //TODO: [PROJECT'24.MS2 - #07] [2] FAULT HANDLER I - Create a new WS element
+	//TODO: [PROJECT'24.MS2 - #07] [2] FAULT HANDLER I - Create a new WS element
+	//If failed to create a new one, kernel should panic()!
+	//COMMENT THE FOLLOWING LINE BEFORE START CODING
+	//	panic("env_page_ws_list_create_element is not implemented yet");
+	//Your Code is Here...
+	   struct WorkingSetElement* my= kmalloc(sizeof( struct WorkingSetElement));
+	  if (my==NULL){
+	      panic("failed to create working set");
+	  }
 
-	 struct WorkingSetElement* WS_new= kmalloc(sizeof(struct WorkingSetElement));
-  if (WS_new==NULL){
-      panic("failed to create working set");
-  }
-//  cprintf("Creating a new working set element for %p\n",virtual_address);
+	  my->virtual_address = virtual_address;
 
-  WS_new->virtual_address = virtual_address;
-  WS_new->empty=0;
+	  return my;
 
-//  cprintf("eslam1\n");
-
-
-  return WS_new;
 }
-
 inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address)
 {
 	if (isPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX))

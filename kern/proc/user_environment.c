@@ -862,24 +862,24 @@ uint32 __cur_k_stk = KERNEL_HEAP_START;
 //===========================================================
 // 5) ALLOCATE SPACE FOR USER KERNEL STACK (One Per Process):
 //===========================================================
-void* create_user_kern_stack(uint32* ptr_user_page_directory) {
+void* create_user_kern_stack(uint32* ptr_user_page_directory)
+{
 #if USE_KHEAP
-    // Define the total stack size (including the guard page)
-	//TODO: [PROJECT'24.MS2 - #09] [2] FAULT HANDLER I - create_user_kern_stack
-    // Allocate memory for the kernel stack (including the guard page)
-//	cprintf("A1\n");
-	 void* stack_base = kmalloc(KERNEL_STACK_SIZE);
-	        if(!stack_base){
-//	        	cprintf("A2\n");
-	            panic("JJJJJJJ");
-	        }
-	        struct FrameInfo* frame = 0;
-//	        cprintf("A3\n");
-	        pt_set_page_permissions(ptr_user_page_directory,(uint32)stack_base,0,PERM_PRESENT);
-//	        cprintf("A4\n");
-	        pt_set_page_permissions(ptr_page_directory,(uint32)stack_base,0,PERM_PRESENT);
-//	        cprintf("A5\n");
-	        return (stack_base);
+	//TODO: [PROJECT'24.MS2 - #07] [2] FAULT HANDLER I - create_user_kern_stack
+	// Write your code here, remove the panic and write your code
+//	panic("create_user_kern_stack() is not implemented yet...!!");
+
+	//allocate space for the user kernel stack.
+	//remember to leave its bottom page as a GUARD PAGE (i.e. not mapped)
+	//return a pointer to the start of the allocated space (including the GUARD PAGE)
+	//On failure: panic
+	void* xy = kmalloc(KERNEL_STACK_SIZE);
+	            if(!xy){
+	                panic("JJJJJJJ");
+	            }
+	            pt_set_page_permissions(ptr_user_page_directory,(uint32)xy,0,PERM_PRESENT);
+	            return (xy);
+
 
 #else
 	if (KERNEL_HEAP_MAX - __cur_k_stk < KERNEL_STACK_SIZE)
@@ -918,12 +918,10 @@ void initialize_uheap_dynamic_allocator(struct Env* e, uint32 daStart, uint32 da
 	//	1) there's no initial allocations for the dynamic allocator of the user heap (=0)
 	//	2) call the initialize_dynamic_allocator(..) to complete the initialization
 	//panic("initialize_uheap_dynamic_allocator() is not implemented yet...!!");
-	e->sbrk = daStart;
-	e->limit = daLimit;
-	e->start = daStart;
-//	allocate_user_mem(e,daStart,sbrk-daStart);
-
-	initialize_dynamic_allocator(daStart,0);
+	 e->sbrk = daStart;
+	    e->limit = daLimit;
+	    e->start = daStart;
+	    initialize_dynamic_allocator(daStart,0);
 }
 
 //==============================================================
@@ -969,27 +967,23 @@ void initialize_environment(struct Env* e, uint32* ptr_user_page_directory, unsi
 	{
 		//[1] Create the stack
 		e->kstack = create_user_kern_stack(e->env_page_directory);
-//		cprintf("user kernel stack created successfully\n");
+
 		//[2] Leave room for the trap frame
 		void* sp = e->kstack + KERNEL_STACK_SIZE;
 		sp -= sizeof(struct Trapframe);
 		e->env_tf = (struct Trapframe *) sp;
-//		cprintf("Left room for the trap frame\n");
 
 		//[3] Set the address of trapret() first - to return on it after env_start() is returned,
 		sp -= 4;
 		*(uint32*)sp = (uint32)trapret;
-//		cprintf("Setting address of trapret\n");
 
 		//[4] Place the context next
 		sp -= sizeof(struct Context);
 		e->context = (struct Context *) sp;
-//		cprintf("Placed context next\n");
 
 		//[4] Setup the context to return to env_start() at the early first run from the scheduler
 		memset(e->context, 0, sizeof(*(e->context)));
 		e->context->eip = (uint32) (env_start);
-//		cprintf("SETUP DONE\n");
 
 	}
 
@@ -1062,7 +1056,6 @@ void initialize_environment(struct Env* e, uint32* ptr_user_page_directory, unsi
 
 	//Completes other environment initializations, (envID, status and most of registers)
 	complete_environment_initialization(e);
-//	cprintf("DONE\n");
 }
 
 //========================================================
@@ -1074,7 +1067,6 @@ void complete_environment_initialization(struct Env* e)
 	//different permissions.
 	e->env_page_directory[PDX(VPT)]  = e->env_cr3 | PERM_PRESENT | PERM_WRITEABLE;
 	e->env_page_directory[PDX(UVPT)] = e->env_cr3 | PERM_PRESENT | PERM_USER;
-//	cprintf("TESTT\n");
 
 	// page file directory initialization
 	e->disk_env_pgdir= 0;

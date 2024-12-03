@@ -175,7 +175,6 @@ void *alloc_block_FF(uint32 size)
 	//TODO: [PROJECT'24.MS1 - #06] [3] DYNAMIC ALLOCATOR - alloc_block_FF
 
 	if(!size){
-		cprintf("1\n");
 		return NULL;
 	}
 	size+= 8;
@@ -187,7 +186,6 @@ void *alloc_block_FF(uint32 size)
 		void* address = sbrk((ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE);
 		if(address == (void*)-1)
 		{
-			cprintf("2\n");
 			return NULL;
 		}
 		uint32* newEndBlock = (uint32*)(address + (ROUNDUP(size,PAGE_SIZE)) - 4);
@@ -208,8 +206,7 @@ void *alloc_block_FF(uint32 size)
 				void* address = sbrk((ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE);
 				if(address == (void*)-1)
 				{
-//					cprintf("size: %d",size);
-//					print_blocks_list(freeBlocksList);
+
 					return NULL;
 				}
 				uint32 prevBlockSize = (*((uint32*)(address - 8))) & ~(0x1);
@@ -224,13 +221,7 @@ void *alloc_block_FF(uint32 size)
 					*footer = (prevBlockSize + ((ROUNDUP(size,PAGE_SIZE)) & ~(0x1)));
 					last = 1;
 					break;
-					//OPTIMIZE THIS (kind of optimized > last solution)
-					/*
-					 * 2048 size
-					 * sbrk -> limit
-					 * free blocks msh mawguda
-					 *
-					 */
+
 				}
 				uint32* header = (uint32*)(address - 4);
 				*header = (ROUNDUP(size,PAGE_SIZE)) & ~(0x1);
@@ -257,7 +248,6 @@ void *alloc_block_FF(uint32 size)
 	}
 
 
-	//trying to optimize
 	if(last){
 		struct BlockElement* freeBlk = LIST_LAST(&freeBlocksList);
 		uint32 blkSize = get_block_size(freeBlk);

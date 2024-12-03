@@ -300,25 +300,11 @@ int sys_pf_calculate_allocated_pages(void)
 /* USER HEAP SYSTEM CALLS */
 /*******************************/
 
-//+++++++++++++++ helper Funcation for System_Call +++++++++++++++++++++++
-
-void HarsEl2amn(uint32 virtual_address,uint32 size){
-	if(virtual_address<USER_HEAP_START|| virtual_address>USER_HEAP_MAX||!size|| virtual_address % PAGE_SIZE != 0){
-					cprintf("USER HEAP START: %p\n",USER_HEAP_START);
-					cprintf("USER HEAP MAX: %p\n",USER_HEAP_MAX);
-					cprintf("VA: %p\n",virtual_address);
-					cprintf("Size: %d\n",size);
-					env_exit();
-	}
-}
-
-
-
-//+++++++++++++++ End helper Funcation for System_Call +++++++++++++++++++++++
 
 void sys_free_user_mem(uint32 virtual_address, uint32 size)
 {
-	HarsEl2amn(virtual_address,size);
+	if(virtual_address<USER_HEAP_START|| virtual_address>USER_HEAP_MAX||!size|| virtual_address % PAGE_SIZE != 0)
+						env_exit();
 	if(isBufferingEnabled())
 	{
 		__free_user_mem_with_buffering(cur_env, virtual_address, size);
@@ -337,7 +323,8 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size)
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 {
 	//TODO: [PROJECT'24.MS1 - #03] [2] SYSTEM CALLS - Params Validation
-	HarsEl2amn(virtual_address,size);
+	if(virtual_address<USER_HEAP_START|| virtual_address>USER_HEAP_MAX||!size|| virtual_address % PAGE_SIZE != 0)
+						env_exit();
 	allocate_user_mem(cur_env, virtual_address, size);
 	return;
 }
@@ -390,11 +377,7 @@ int sys_getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 {
 	return getSharedObject(ownerID, shareName, virtual_address);
 }
-//abdo
-int32 sys_getSharedid(void* virtual_address)
-{
-	return getSharedid( virtual_address);
-}
+
 int sys_freeSharedObject(int32 sharedObjectID, void *startVA)
 {
 	return freeSharedObject(sharedObjectID, startVA);
@@ -622,10 +605,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 	case SYS_free_shared_object:
 		return sys_freeSharedObject((int32)a1, (void *)a2);
 		break;
-	//abdo
-	case SYS_getSharedid:
-		return sys_getSharedid((void *)a1);
-		break;
+
 	case SYS_get_size_of_shared_object:
 		return sys_getSizeOfSharedObject((int32)a1, (char*)a2);
 		break;
