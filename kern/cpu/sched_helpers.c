@@ -140,7 +140,7 @@ void sched_insert_ready0(struct Env* env)
 		enqueue(&(ProcessQueues.env_ready_queues[0]), env);
 	}
 }
-
+dequeue
 //============================================================
 // [2] Insert the given Env in the priority-based Ready Queue:
 //============================================================

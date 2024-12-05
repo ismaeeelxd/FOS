@@ -315,6 +315,9 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size)
 	}
 	return;
 }
+struct Env* sys_dequeue(struct Env_Queue* queue){
+	return dequeue(queue);
+}
 
 
 
@@ -693,7 +696,15 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 	case NSYSCALLS:
 		return 	-E_INVAL;
 		break;
+	case SYS_dequeue:
+		return sys_dequeue((struct Env_Queue*)a1);
+	    break;
+	case SYS_enqueue:
+		sys_enqueue(((struct Env_Queue*)a1),(struct Env*)a2);
+		return 0;
+		break;
 	}
+
 	//panic("syscall not implemented");
 	return -E_INVAL;
 }
