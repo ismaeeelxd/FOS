@@ -315,10 +315,23 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size)
 	}
 	return;
 }
+
+void sys_enqueue(struct Env_Queue* queue, struct Env* e){
+	enqueue(queue,e);
+	return;
+}
+
+
 struct Env* sys_dequeue(struct Env_Queue* queue){
 	return dequeue(queue);
 }
 
+
+void sys_ready_enqueue(struct Env* e){
+	acquire_spinlock(&ProcessQueues.qlock);
+	enqueue(ProcessQueues.env_ready_queues,e);
+	release_spinlock(&ProcessQueues.qlock);
+}
 
 
 
@@ -697,10 +710,14 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 		return 	-E_INVAL;
 		break;
 	case SYS_dequeue:
-		return sys_dequeue((struct Env_Queue*)a1);
+		return (uint32)(sys_dequeue((struct Env_Queue*)a1));
 	    break;
 	case SYS_enqueue:
 		sys_enqueue(((struct Env_Queue*)a1),(struct Env*)a2);
+		return 0;
+		break;
+	case SYS_ready_enqueue:
+		sys_ready_enqueue((struct Env*) a1);
 		return 0;
 		break;
 	}

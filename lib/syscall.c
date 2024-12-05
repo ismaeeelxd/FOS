@@ -319,8 +319,14 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 
 }
 struct Env* sys_dequeue(struct Env_Queue* queue){
-	return syscall(SYS_dequeue, (uint32)queue,0,0,0,0);
+	return (struct Env*)(syscall(SYS_dequeue, (uint32)queue,0,0,0,0));
 }
 void sys_enqueue(struct Env_Queue* queue,struct Env* env){
-	syscall(SYS_enqueue, (uint32)queue,env,0,0,0);
+	syscall(SYS_enqueue, (uint32)queue,(uint32)env,0,0,0);
+	return;
+}
+
+void sys_ready_enqueue(struct Env* env){
+	syscall(SYS_ready_enqueue,(uint32)env,0,0,0,0);
+	return;
 }

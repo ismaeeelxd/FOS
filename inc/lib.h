@@ -43,7 +43,9 @@ int		sys_cgetc(void);
 void 	sys_cputc(const char c);
 void 	sys_lock_cons(void);
 void 	sys_unlock_cons(void);
-
+struct Env* sys_dequeue(struct Env_Queue* queue);
+void sys_enqueue(struct Env_Queue* queue,struct Env* env);
+void sys_ready_enqueue(struct Env* env);
 //User Env
 int32	sys_getenvindex(void);
 int32	sys_getenvid(void);

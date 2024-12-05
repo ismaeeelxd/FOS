@@ -191,8 +191,8 @@ void* kmalloc(unsigned int size)
 //		 	cprintf("Lock is released kmalloc a2al mn ely msh 3aref eh\n");
 			return NULL;
 		}
-		acquire_spinlock(&Alloc.clk);
 
+		acquire_spinlock(&Alloc.clk);
 	    for (uint32 i = 0; i < Alloc.free_page_count; i++) {
 	        if (Alloc.free_pages[i].numOfPagesFreeAfter + 1 >= numPagesNeeded) {
 	            uint32 first_page_allocated = Alloc.free_pages[i].starting_addr;
