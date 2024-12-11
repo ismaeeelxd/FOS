@@ -8,7 +8,7 @@
 // [1] CHANGE THE BREAK LIMIT OF THE USER HEAP:
 //=============================================
 /*2023*/
-int arr[(USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE]={0};
+int arrOfUser[(USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE]={0};
 
 void* sbrk(int increment)
 {
@@ -49,7 +49,7 @@ void* malloc(uint32 size)
 	        uint32 firstpagealloced=0;
 
 	        for(uint32 i = start;i<USER_HEAP_MAX;i+=PAGE_SIZE){
-	            if(!arr[(i - USER_HEAP_START)/PAGE_SIZE]){
+	            if(!arrOfUser[(i - USER_HEAP_START)/PAGE_SIZE]){
 	                    if(numfreepages==0)
 	                    	firstpagealloced=i;
 	                    numfreepages++;
@@ -73,10 +73,10 @@ void* malloc(uint32 size)
 	            for(int i = 0;i<pages_3yzhom;++i){
 	                if(i==0)
 	                {
-	                    arr[((firstpagealloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=pages_3yzhom;
+	                	arrOfUser[((firstpagealloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=pages_3yzhom;
 	                    continue;
 	                }
-	                arr[((firstpagealloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=-2;
+	                arrOfUser[((firstpagealloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=-2;
 
 	            }
 	            return (void*)(firstpagealloced);
@@ -97,13 +97,13 @@ void free(void* virtual_address)
 	                if(address>=(myEnv->limit+ PAGE_SIZE)&&address<USER_HEAP_MAX )
 	                {
 	                    address=ROUNDDOWN(address,PAGE_SIZE);
-	                    int c=arr[(address-USER_HEAP_START)/PAGE_SIZE];
+	                    int c=arrOfUser[(address-USER_HEAP_START)/PAGE_SIZE];
 	                    uint32 total_size=(uint32)(c*PAGE_SIZE);
 	                    int r=(address-USER_HEAP_START)/PAGE_SIZE;
 	                    sys_free_user_mem(address,total_size);
 	                    while(c--)
 	                    {
-	                        arr[r]=0;
+	                    	arrOfUser[r]=0;
 	                        r++;
 	                    }
 	                }
@@ -141,7 +141,7 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
         uint32 firstpage_alloced=0;
         uint32 start=myEnv-> limit+PAGE_SIZE;
             for(uint32 i = start;i<USER_HEAP_MAX;i+=PAGE_SIZE){
-                if(!arr[(i - USER_HEAP_START)/PAGE_SIZE]){
+                if(!arrOfUser[(i - USER_HEAP_START)/PAGE_SIZE]){
                         if(FreePages==0)
                             firstpage_alloced=i;
                         FreePages++;
@@ -168,10 +168,10 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
                 for(int i = 0;i<pages3ahzhom;++i){
                     if(i==0)
                     {
-                        arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=pages3ahzhom;
+                    	arrOfUser[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=pages3ahzhom;
                         continue;
                     }
-                    arr[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=-2;
+                    arrOfUser[((firstpage_alloced+PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE]=-2;
 
                 }
                 return (void*)(firstpage_alloced);
@@ -201,7 +201,7 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 			uint32 start = myEnv->limit + PAGE_SIZE;
 
 			for(uint32 i = start; i < USER_HEAP_MAX; i += PAGE_SIZE) {
-				if(!arr[(i - USER_HEAP_START)/PAGE_SIZE]) {
+				if(!arrOfUser[(i - USER_HEAP_START)/PAGE_SIZE]) {
 
 					if(numFreePages == 0)
 						firstpage_alloced = i;
@@ -227,10 +227,10 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 					for(int i = 0; i < pages3ahzom; ++i) {
 
 						if(i == 0) {
-							arr[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = pages3ahzom;
+							arrOfUser[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = pages3ahzom;
 							continue;
 						}
-						arr[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = -2;
+						arrOfUser[((firstpage_alloced + PAGE_SIZE*i) - USER_HEAP_START)/PAGE_SIZE] = -2;
 					}
 					return (void*)firstpage_alloced;
 				}
@@ -258,9 +258,90 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 
 void sfree(void* virtual_address)
 {
-	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
-	// Write your code here, remove the panic and write your code
-	panic("sfree() is not implemented yet...!!");
+//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
+// Write your code here, remove the panic and write your code
+//panic("sfree() is not implemented yet...!!");
+
+int32 id = sys_getSharedid(virtual_address);
+if(id == E_SHARED_MEM_NOT_EXISTS){
+return;
+}
+cprintf("Freeing @ %p\n",virtual_address);
+
+uint32 address=(uint32)virtual_address;
+//page Alloc
+if(address>=(myEnv->limit+ PAGE_SIZE)&&address<USER_HEAP_MAX )
+{
+address=ROUNDDOWN(address,PAGE_SIZE);
+int c=arrOfUser[(address-USER_HEAP_START)/PAGE_SIZE];
+uint32 total_size=(uint32)(c*PAGE_SIZE);
+int r=(address-USER_HEAP_START)/PAGE_SIZE;
+uint32 ret = sys_freeSharedObject(id, virtual_address);
+if(ret == E_SHARED_MEM_NOT_EXISTS){
+return;
+}
+while(c--)
+{
+	arrOfUser[r]=0;
+r++;
+}
+}
+
+// const uint32 mask = 0x7FFFFFFF;
+//    int32 id = (int32)((uint32)virtual_address & mask);
+//    sys_freeSharedObject(id, virtual_address);
+//    uint32* page_directory = myEnv->env_page_directory;
+//    uint32* page_table = NULL;
+//    struct FrameInfo* frame_info = get_frame_info(page_directory, (uint32)virtual_address, &page_table);
+//
+//    //int num_of_pages=ROUNDUP(s->size,PAGE_SIZE)/PAGE_SIZE;
+//    if (frame_info == NULL) {
+//           cprintf("sfree: Invalid virtual address, no frame found\n");
+//           return;
+//       }
+//struct Share* res=NULL;
+//struct Share* temp=NULL;
+//for (int i=0;i<100;i++)
+//{
+//
+//}
+//LIST_FOREACH(temp,&(AllShares.shares_list)){
+//if( temp->prev_next_info.le_next==frame_info->prev_next_info.le_next){
+//             res=temp;
+// break;
+//}
+//}
+////       // Step 2: Find the shared object ID associated with this frame
+////       int shared_object_id = frame_info->prev_next_info; // Assuming frame_info tracks shared_object_id
+////       if (shared_object_id == -1) {
+////           cprintf("sfree: Virtual address not associated with a shared object\n");
+////           return;
+////       }
+//
+//       // Step 3: Call sys_freeSharedObject to free the shared object
+//       int result = sys_freeSharedObject(res->ID, virtual_address);
+//       if (result < 0) {
+//           cprintf("sfree: Failed to free shared object, error code: %d\n", result);
+//           return;
+//       }
+//
+//       cprintf("sfree: Successfully freed shared object ID: %d\n", shared_object_id);
+//    //uint32 *page_directory=myenv->env_page_directory;
+//   // uint32 *ptr_page_table ;
+////    for(int i=0;i<num_of_pages;i++)
+////    {
+////     struct FrameInfo* sa= s->framesStorage[i];
+////    // if(sa==0){
+////    // return E_SHARED_MEM_NOT_EXISTS;
+////    // }
+////
+////    }
+////  //  myEnv=cur_env->env_parent_id;
+//////curenv->env_parent_id;
+////   // (int32) ((uint32)virtual_address & 0x7FFFFFFF)
+////   // sys_freeSharedObject(myEnv,virtual_address);
+//    free(virtual_address);
+
 }
 
 

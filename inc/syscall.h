@@ -26,9 +26,10 @@ enum
 	SYS_move_user_mem,
 	SYS_clearFFL,
 	SYS_create_shared_object,
-	SYS_get_size_of_shared_object,
-	SYS_get_shared_object,
-	SYS_free_shared_object,
+	    SYS_getSharedid,
+	    SYS_get_size_of_shared_object,
+	    SYS_get_shared_object,
+	    SYS_free_shared_object,
 	SYS_create_env,
 	SYS_run_env,
 	SYS_destroy_env,
@@ -55,6 +56,9 @@ enum
 	SYS_dequeue,
 	SYS_enqueue,
 	SYS_ready_enqueue,
+	SYS_wait,
+	SYS_signal,
+	SYS_init_queue,
 
 	//=====================================================================
 	NSYSCALLS

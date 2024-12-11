@@ -120,25 +120,31 @@ sys_clear_ffl()
 
 int sys_createSharedObject(char* shareName, uint32 size, uint8 isWritable, void* virtual_address)
 {
-	return syscall(SYS_create_shared_object,(uint32)shareName, (uint32)size, isWritable, (uint32)virtual_address,  0);
+    return syscall(SYS_create_shared_object,(uint32)shareName, (uint32)size, isWritable, (uint32)virtual_address,  0);
+}
+//abdo
+int32 sys_getSharedid(void* virtual_address)
+{
+    return syscall(SYS_getSharedid,(uint32)virtual_address,0, 0, 0,  0);
 }
 
 //2017:
 int sys_getSizeOfSharedObject(int32 ownerID, char* shareName)
 {
-	return syscall(SYS_get_size_of_shared_object,(uint32) ownerID, (uint32)shareName, 0, 0, 0);
+    return syscall(SYS_get_size_of_shared_object,(uint32) ownerID, (uint32)shareName, 0, 0, 0);
 }
 //==========
 
 int sys_getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 {
-	return syscall(SYS_get_shared_object,(uint32) ownerID, (uint32)shareName, (uint32)virtual_address, 0, 0);
+    return syscall(SYS_get_shared_object,(uint32) ownerID, (uint32)shareName, (uint32)virtual_address, 0, 0);
 }
 
 int sys_freeSharedObject(int32 sharedObjectID, void *startVA)
 {
-	return syscall(SYS_free_shared_object,(uint32) sharedObjectID, (uint32) startVA, 0, 0, 0);
+    return syscall(SYS_free_shared_object,(uint32) sharedObjectID, (uint32) startVA, 0, 0, 0);
 }
+
 
 int sys_create_env(char* programName, unsigned int page_WS_size,unsigned int LRU_second_list_size,unsigned int percent_WS_pages_to_remove)
 {
@@ -330,3 +336,22 @@ void sys_ready_enqueue(struct Env* env){
 	syscall(SYS_ready_enqueue,(uint32)env,0,0,0,0);
 	return;
 }
+
+
+void sys_wait(struct semaphore* s )
+{
+	 syscall(SYS_wait,(uint32) s,0,0,0,0);
+	 return;
+}
+void sys_signal(struct semaphore* s )
+{
+	syscall(SYS_signal,(uint32) s,0,0,0,0);
+	return;
+}
+
+void sys_init_queue(struct Env_Queue* queue)
+{
+	syscall(SYS_init_queue,(uint32)queue,0,0,0,0);
+	return;
+}
+

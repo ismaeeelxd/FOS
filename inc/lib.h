@@ -87,6 +87,9 @@ int 	sys_pf_calculate_allocated_pages(void);
 
 //Semaphores
 
+void sys_signal(struct semaphore* sem);
+void sys_wait(struct semaphore* sem);
+void sys_init_queue(struct Env_Queue* queue);
 
 //Sharing
 //2017
@@ -94,6 +97,8 @@ int 	sys_createSharedObject(char* shareName, uint32 size, uint8 isWritable, void
 int 	sys_getSizeOfSharedObject(int32 ownerID, char* shareName);
 int 	sys_getSharedObject(int32 ownerID, char* shareName, void* virtual_address );
 int 	sys_freeSharedObject(int32 sharedObjectID, void *startVA);
+int32 	sys_getSharedid(void* virtual_address);
+
 
 //etc...
 uint32	sys_rcr2();
@@ -111,7 +116,6 @@ int 	sys_check_LRU_lists_free(uint32* list_content, int list_size);
 int 	sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 last_WS_element_content, bool chk_in_order);
 //2024
 void 	sys_utilities(char* utilityName, int value);
-
 /* concurrency.c */
 void env_sleep(uint32 apprxMilliSeconds);
 uint32 busy_wait(uint32 loopMax);

@@ -1,13 +1,25 @@
-// User-level Semaphore
-
 #include "inc/lib.h"
 struct semaphore create_semaphore(char *semaphoreName, uint32 value) {
 	//TODO: [PROJECT'24.MS3 - #02] [2] USER-LEVEL SEMAPHORE - create_semaphore
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("create_semaphore is not implemented yet");
+//	panic("create_semaphore is not implemented yet");
 	//Your Code is Here...
-	//struct semaphore s;
-	//init_spinlock()
+	//struct __semdata semm;
+	uint32 size = sizeof(struct __semdata);
+	struct semaphore s;
+//	cprintf("Creating semaphore : %s, with value : %d\n",semaphoreName,value);
+	s.semdata=smalloc(semaphoreName,size,1);
+
+	s.semdata->count=value;
+
+	for(int i=0;i<64;i++)
+	{
+		s.semdata->name[i]=semaphoreName[i];
+	}
+	sys_init_queue(&(s.semdata->queue));
+	s.semdata->lock=0;
+//	cprintf("ana khlst awlll function\n");
+	return s ;
 }
 struct semaphore get_semaphore(int32 ownerEnvID, char* semaphoreName) {
 	//TODO: [PROJECT'24.MS3 - #03] [2] USER-LEVEL SEMAPHORE - get_semaphore
@@ -22,27 +34,28 @@ struct semaphore get_semaphore(int32 ownerEnvID, char* semaphoreName) {
 void wait_semaphore(struct semaphore sem) {
 	//TODO: [PROJECT'24.MS3 - #04] [2] USER-LEVEL SEMAPHORE - wait_semaphore
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("wait_semaphore is not implemented yet");
+//	panic("wait_semaphore is not implemented yet");
 	//Your Code is Here...
+	//uint32 k = 1;
+//	sem.semdata->count--;
+	sys_wait(&(sem));
+
 }
+
+
 
 void signal_semaphore(struct semaphore sem) {
 	//TODO: [PROJECT'24.MS3 - #05] [2] USER-LEVEL SEMAPHORE - signal_semaphore
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("signal_semaphore is not implemented yet");
 	//Your Code is Here...
-	uint32 keys = 1;
-	while (keys != 0) {
-		xchg(&keys, sem.semdata->lock);
+
+	sys_signal(&(sem));
+
+//	cprintf("khlst if cond");
 	}
-	sem.semdata->count++;
-	if (sem.semdata->count <= 0) {
-		struct Env_Queue* t = &(sem.semdata->queue);
-		struct Env* e = sys_dequeue(t);
-		sys_ready_enqueue(e);
-	}
-	sem.semdata->lock = 0;
-}
+
+
 
 int semaphore_count(struct semaphore sem) {
 	return sem.semdata->count;
