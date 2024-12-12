@@ -710,22 +710,76 @@ void env_set_priority(int envID, int priority)
 	//Your code is here
 	//Comment the following line
 	//panic("Not implemented yet");
-	if(proc==NULL)
-	{
-		 return;
-	}
-	if(proc->env_status == ENV_READY)
-	{
-		acquire_spinlock(&(ProcessQueues.qlock));
-		sched_remove_ready(proc);
-		release_spinlock(&(ProcessQueues.qlock));
+	//	if(proc->env_status != ENV_NEW)
+	//	{
+	//		if(priority>num_of_ready_queues-1)
+	//				{
+	//					priority=num_of_ready_queues-1;
+	//				}
+	//				else if(priority<PRI_MIN)
+	//				{
+	//					priority=PRI_MIN;
+	//				}
+	//		proc->priority = priority;
+	//
+	//	}
+	//	sched_print_all();
+		sched_print_all();
+		if(proc==NULL)
+		{
+			 return;
+		}
+		bool is=0;
+		int pri;
+		for (int i = 0 ; i < num_of_ready_queues ; i++)
+				{
+					struct Env * ptr_env = find_env_in_queue(&(ProcessQueues.env_ready_queues[i]), proc->env_id);
+					if (ptr_env != NULL)
+					{
+						is=1;
+						pri=i;
+					}
+				}
+	struct Env *p= find_env_in_queue(&(ProcessQueues.env_ready_queues[proc->priority]), proc->env_id);
+	//	if(&(ProcessQueues.env_new_queue.size)!=NULL)
+	//	{
+	//		ProcessQueues.env_new_queue=NULL;
+	//	}
+		cprintf("%d\n",is);
 
-	}
+		if(p!=NULL)	{
+			cprintf("11\n");
+			acquire_spinlock(&(ProcessQueues.qlock));
+	//		proc->env_status=ENV_READY;
+			//sched_remove_ready(proc);
+			LIST_REMOVE(&(ProcessQueues.env_ready_queues[pri]), proc);
+			proc->env_status = ENV_UNKNOWN;
+			proc->priority=priority;
+			sched_insert_ready(proc);
+			//LIST_REMOVE(&(ProcessQueues.env_ready_queues[proc->priority]),proc);
+			release_spinlock(&(ProcessQueues.qlock));
 
-	proc->priority=priority;
-	acquire_spinlock(&(ProcessQueues.qlock));
-	sched_insert_ready(proc);
-	release_spinlock(&(ProcessQueues.qlock));
+		}
+
+		else
+		{
+			acquire_spinlock(&(ProcessQueues.qlock));
+			proc->priority=priority;
+			release_spinlock(&(ProcessQueues.qlock));
+
+	//	cprintf("55\n");
+	//	acquire_spinlock(&(ProcessQueues.qlock));
+	//	proc->priority=priority;
+	//	//proc->env_status=ENV_READY;
+	//	sched_remove_new(proc);
+	//	sched_insert_ready(proc);
+	//	//LIST_INSERT_TAIL(&(ProcessQueues.env_ready_queues[proc->priority]),proc);
+	//	release_spinlock(&(ProcessQueues.qlock));
+		}
+		sched_print_all();
+		cprintf("%d\n",proc->env_status);
+
+
 
 }
 

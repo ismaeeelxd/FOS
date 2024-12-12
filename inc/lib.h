@@ -90,7 +90,8 @@ int 	sys_pf_calculate_allocated_pages(void);
 void sys_signal(struct semaphore* sem);
 void sys_wait(struct semaphore* sem);
 void sys_init_queue(struct Env_Queue* queue);
-
+//add
+void sys_env_set_priority(int envID, int priority);
 //Sharing
 //2017
 int 	sys_createSharedObject(char* shareName, uint32 size, uint8 isWritable, void* virtual_address);

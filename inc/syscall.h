@@ -59,7 +59,7 @@ enum
 	SYS_wait,
 	SYS_signal,
 	SYS_init_queue,
-
+	SYS_env_set_priority,
 	//=====================================================================
 	NSYSCALLS
 };

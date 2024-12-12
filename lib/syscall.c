@@ -354,4 +354,9 @@ void sys_init_queue(struct Env_Queue* queue)
 	syscall(SYS_init_queue,(uint32)queue,0,0,0,0);
 	return;
 }
-
+//add
+void sys_env_set_priority(int envID, int priority)
+{
+	syscall(SYS_env_set_priority,(int)envID,(int)priority,0,0,0);
+	return;
+}

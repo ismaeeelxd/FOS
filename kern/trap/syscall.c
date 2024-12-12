@@ -310,7 +310,11 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size) {
 	allocate_user_mem(cur_env, virtual_address, size);
 	return;
 }
-
+//add
+void sys_env_set_priority(int envID, int priority)
+{
+	env_set_priority( envID, priority);
+}
 void sys_allocate_chunk(uint32 virtual_address, uint32 size, uint32 perms) {
 	//TODO: [PROJECT'24.MS1 - #03] [2] SYSTEM CALLS - Params Validation
 
@@ -727,7 +731,10 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 		sys_ready_enqueue((struct Env*) a1);
 		return 0;
 		break;
-
+	case SYS_env_set_priority:
+		sys_env_set_priority((int)a1,(int)a2);
+				return 0;
+				break;
 	case SYS_wait:
 
 		sys_wait((struct semaphore*) a1);
