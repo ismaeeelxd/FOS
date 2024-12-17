@@ -349,22 +349,42 @@ struct Env* fos_scheduler_PRIRR() {
 	//cprintf("fos_scheduler_PRIRR START\n");
 		struct Env *next_env = NULL;
 		struct Env *cur_env = get_cpu_proc();
-		if (cur_env != NULL) {
-			cur_env->env_status = ENV_READY;
-			enqueue(&(ProcessQueues.env_ready_queues[cur_env->priority]), cur_env);
-
+		if (cur_env != NULL)
+		{
+				cur_env->env_status = ENV_READY;
+				enqueue(&(ProcessQueues.env_ready_queues[cur_env->priority]), cur_env);
 		}
-		for (int i = 0; i < num_of_ready_queues; i++) {
-			int size = queue_size(&(ProcessQueues.env_ready_queues[i]));
-			if (size > 0) {
+		for (int i = 0; i < num_of_ready_queues; i++)
+		{
+
+			//int size = queue_size(&(ProcessQueues.env_ready_queues[i]));
+			if(queue_size(&(ProcessQueues.env_ready_queues[i]))> 0)
+			{
+				//cprintf("%d\\n",quantums[0]);
+				kclock_set_quantum(quantums[0]);
 				next_env = dequeue(&(ProcessQueues.env_ready_queues[i]));
-				next_env->env_status = ENV_RUNNING;
-				break;
+				//next_env->env_status = ENV_RUNNING;
+				return next_env;
+
 			}
 		}
-		kclock_set_quantum(quantums[0]);
-		ticks++;
-		return next_env;
+
+//		if (cur_env != NULL) {
+//			cur_env->env_status = ENV_READY;
+//			enqueue(&(ProcessQueues.env_ready_queues[cur_env->priority]), cur_env);
+//
+//		}
+//		for (int i = 0; i < num_of_ready_queues; i++) {
+//			int size = queue_size(&(ProcessQueues.env_ready_queues[i]));
+//			if (size > 0) {
+//				next_env = dequeue(&(ProcessQueues.env_ready_queues[i]));
+//				next_env->env_status = ENV_RUNNING;
+//				break;
+//			}
+//		}
+//		kclock_set_quantum(quantums[0]);
+//		ticks++;
+//		return next_env;
 
 	//	if(num_of_ready_queues==0)
 	//	{
@@ -406,7 +426,7 @@ struct Env* fos_scheduler_PRIRR() {
 	//ms=0;
 	//ticks=0;
 	////cprintf("AB\n");
-	//return NULL;
+	return NULL;
 	//}
 }
 
@@ -425,7 +445,7 @@ void clock_interrupt_handler(struct Trapframe* tf) {
 		//(ticks & 3) == 0
 				//sched_print_all();
 				struct Env *proc = NULL;
-				if ((ticks & 3) == 0)
+//				if (timer_ticks()->=starvation_threshold )
 				{
 					for (uint8 i = num_of_ready_queues - 1; i > 0; i--)
 					{
@@ -434,26 +454,31 @@ void clock_interrupt_handler(struct Trapframe* tf) {
 						{
 							LIST_FOREACH(proc, &(ProcessQueues.env_ready_queues[i]))
 				{
-								//cprintf("l\n");
-								if (proc->nClocks >= starvation_threshold)
+							int64 time12=timer_ticks()-proc->startticks;
+							cprintf("%d\n",time12);
+								cprintf("l\n");
+								if (time12 >= starvation_threshold)
 							{
 									cprintf("ANA\n");
-						LIST_REMOVE(&(ProcessQueues.env_ready_queues[i]),proc);
-						//sched_remove_ready(proc);
-						proc->env_status = ENV_READY;
-						proc->priority=i-1;
-						//sched_insert_ready(proc);
-						LIST_INSERT_TAIL(&(ProcessQueues.env_ready_queues[proc->priority]),proc);
-
-						proc->nClocks = 0;
+									env_set_priority(proc->env_id,i-1);
+									//cprintf("ID:%d/nPRI:%d/n",proc->env_id,proc->priority);
+//									proc->nClocks=0;
+//						LIST_REMOVE(&(ProcessQueues.env_ready_queues[i]),proc);
+//						//sched_remove_ready(proc);
+//						proc->env_status = ENV_READY;
+//						proc->priority=i-1;
+//						//sched_insert_ready(proc);
+//						LIST_INSERT_TAIL(&(ProcessQueues.env_ready_queues[proc->priority]),proc);
+//
+////						proc->nClocks = 0;
 							}
 				}
 						}
 					}
 
 				}
-
 			}
+
 		//	ticks=0;
 
 		//			//acquire_spinlock(&(ProcessQueues.qlock));

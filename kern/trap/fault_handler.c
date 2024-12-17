@@ -275,7 +275,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 	int iWS =faulted_env->page_last_WS_index;
 	uint32 wsSize = env_page_ws_get_size(faulted_env);
 #endif
-	cprintf("faultedva %p\n", fault_va);
+	//cprintf("faultedva %p\n", fault_va);
 	if (wsSize < (faulted_env->page_WS_max_size)) {
 //		cprintf("palcement size: %d\n", wsSize);
 //		cprintf("faultedva %p\n", fault_va);

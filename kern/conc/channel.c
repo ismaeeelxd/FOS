@@ -66,7 +66,7 @@ void sleep(struct Channel *chan, struct spinlock* lk)
 void makeWaitedElementReady(struct Channel *chan){
 	struct Env *current_p;
 	current_p = dequeue(&chan->queue);
-			sched_insert_ready0(current_p);
+			sched_insert_ready(current_p);
 }
 
 
