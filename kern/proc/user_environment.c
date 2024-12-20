@@ -460,28 +460,47 @@ void env_start(void)
 //===============================
 // Frees environment "e" and all memory it uses.
 //
-void env_free(struct Env *e)
-{
-	/*REMOVE THIS LINE BEFORE START CODING*/
-	return;
-	/**************************************/
+void env_free(struct Env *e) {
+    /*REMOVE THIS LINE BEFORE START CODING*/
+//    return;
+    /**************************************/
+    struct WorkingSetElement* temp;
+    LIST_FOREACH(temp,&(e->page_WS_list))
+    {
+        unmap_frame(e->env_page_directory, temp->virtual_address);
+        LIST_REMOVE(&(e->page_WS_list), temp);
+        kfree(temp);
 
-	//[PROJECT'24.MS3] BONUS [EXIT ENV] env_free
-	// your code is here, remove the panic and write your code
-	panic("env_free() is not implemented yet...!!");
+    }
+    for (uint32 i = 0; i < USER_TOP; i += PAGE_SIZE) {
+        uint32 * x;
+        int res = get_page_table(e->env_page_directory, i, &x);
+        if (res == TABLE_IN_MEMORY) {
+            e->env_page_directory[PDX(i)] = 0;
+            kfree(x);
+        }
+    }
+
+    kfree((e->env_page_directory));
+
+    e->env_page_directory = NULL;
+    kfree(e->kstack);
 
 
-	// [9] remove this program from the page file
-	/*(ALREADY DONE for you)*/
-	pf_free_env(e); /*(ALREADY DONE for you)*/ // (removes all of the program pages from the page file)
-	/*========================*/
+    //[PROJECT'24.MS3] BONUS [EXIT ENV] env_free
+    // your code is here, remove the panic and write your code
+//    panic("env_free() is not implemented yet...!!");
 
-	// [10] free the environment (return it back to the free environment list)
-	/*(ALREADY DONE for you)*/
-	free_environment(e); /*(ALREADY DONE for you)*/ // (frees the environment (returns it back to the free environment list))
-	/*========================*/
+    // [9] remove this program from the page file
+    /*(ALREADY DONE for you)*/
+    pf_free_env(e); /*(ALREADY DONE for you)*/ // (removes all of the program pages from the page file)
+    /*========================*/
+
+    // [10] free the environment (return it back to the free environment list)
+    /*(ALREADY DONE for you)*/
+    free_environment(e); /*(ALREADY DONE for you)*/ // (frees the environment (returns it back to the free environment list))
+    /*========================*/
 }
-
 //============================
 // 4) PLACE ENV IN EXIT QUEUE:
 //============================

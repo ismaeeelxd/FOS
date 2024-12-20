@@ -437,7 +437,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 				LIST_NEXT(foundVictim) : LIST_FIRST(&faulted_env->page_WS_list);
 
 //		cprintf("*************AFTER EVICTING***************\n");
-		env_page_ws_print(faulted_env);
+//		env_page_ws_print(faulted_env);
 		if(modified)
 			page_WS_max_sweeps = 0 - page_WS_max_sweeps;
 	}

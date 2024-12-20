@@ -240,7 +240,7 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh) 
 	//Your code is here
 	//Comment the following line
 	//panic("Not implemented yet");
-	cprintf("sched_init_PRIRR START\n");
+//	cprintf("sched_init_PRIRR START\n");
 
 		ProcessQueues.env_ready_queues = (struct Env_Queue*) kmalloc(
 				numOfPriorities * sizeof(struct Env_Queue));
@@ -254,7 +254,7 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh) 
 		for (uint8 i = 0; i < numOfPriorities; i++) {
 			init_queue(&ProcessQueues.env_ready_queues[i]);
 		}
-		sched_print_all();
+//		sched_print_all();
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
 	uint16 cnt0 = kclock_read_cnt0_latch(); //read after write to ensure it's set to the desired value
@@ -416,14 +416,12 @@ struct Env* fos_scheduler_PRIRR() {
 	//   // release_spinlock(&(ProcessQueues.qlock));
 	//if(proc1!=NULL)
 	//{
-	//	ticks++;
 	//	ms+=quantums[0];
 	//	kclock_set_quantum(quantums[0]);
 	//	//cprintf("AB1\n");
 	//	return proc1;
 	//}
 	//else{
-	//ms=0;
 	//ticks=0;
 	////cprintf("AB\n");
 	return NULL;
@@ -442,7 +440,6 @@ void clock_interrupt_handler(struct Trapframe* tf) {
 		//panic("Not implemented yet");
 		//cprintf("AB8\n");
 				//cprintf("clock_interrupt_handler START\n");
-		//(ticks & 3) == 0
 				//sched_print_all();
 				struct Env *proc = NULL;
 //				if (timer_ticks()->=starvation_threshold )
@@ -455,11 +452,11 @@ void clock_interrupt_handler(struct Trapframe* tf) {
 							LIST_FOREACH(proc, &(ProcessQueues.env_ready_queues[i]))
 				{
 							int64 time12=timer_ticks()-proc->startticks;
-							cprintf("%d\n",time12);
-								cprintf("l\n");
+//							cprintf("%d\n",time12);
+//								cprintf("l\n");
 								if (time12 >= starvation_threshold)
 							{
-									cprintf("ANA\n");
+//									cprintf("ANA\n");
 									env_set_priority(proc->env_id,i-1);
 									//cprintf("ID:%d/nPRI:%d/n",proc->env_id,proc->priority);
 //									proc->nClocks=0;
@@ -481,44 +478,6 @@ void clock_interrupt_handler(struct Trapframe* tf) {
 
 		//	ticks=0;
 
-		//			//acquire_spinlock(&(ProcessQueues.qlock));
-		//			for (uint8 i = num_of_ready_queues - 1; i > 0; i--) {
-		//				struct Env *proc = NULL;
-		//				if ((ticks & 3) == 0) {
-		//					//acquire_spinlock(&(ProcessQueues.qlock));
-		//					for (uint8 i = num_of_ready_queues - 1; i > 0; i--) {
-		//						int size = queue_size(
-		//								&(ProcessQueues.env_ready_queues[i]));
-		//						if (size > 0) {
-		//							LIST_FOREACH(proc, &(ProcessQueues.env_ready_queues[i]))
-		//							{
-		//								//cprintf("AB8\n");
-		//								struct Env *next_env = NULL;
-		//
-		//								if (proc->nClocks >= starvation_threshold) {
-		//									//next_env = dequeue(proc);
-		//									LIST_REMOVE(
-		//											&(ProcessQueues.env_ready_queues[i]),
-		//											proc);
-		//									proc->env_status = ENV_UNKNOWN;
-		////						sched_remove_ready(proc);
-		//									proc->priority++;
-		//									proc->nClocks = 0;
-		//									proc->env_status = ENV_READY;
-		//									enqueue(
-		//											&(ProcessQueues.env_ready_queues[proc->priority]),
-		//											proc);
-		//									//	sched_insert_ready(proc);
-		//								}
-		//							}
-		//
-		//						}
-		//					}
-		//					// release_spinlock(&(ProcessQueues.qlock));
-		//				}
-		//				ms += quantums[0];
-		//				//cprintf("AB7\n");
-		//			}
 
 	/********DON'T CHANGE THESE LINES***********/
 	ticks++;

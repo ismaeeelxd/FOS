@@ -745,10 +745,10 @@ void env_set_priority(int envID, int priority)
 	//	{
 	//		ProcessQueues.env_new_queue=NULL;
 	//	}
-		cprintf("%d\n",is);
+//		cprintf("%d\n",is);
 
 		if(p!=NULL)	{
-			cprintf("11\n");
+//			cprintf("11\n");
 			acquire_spinlock(&(ProcessQueues.qlock));
 	//		proc->env_status=ENV_READY;
 			//sched_remove_ready(proc);
@@ -766,7 +766,6 @@ void env_set_priority(int envID, int priority)
 			acquire_spinlock(&(ProcessQueues.qlock));
 			proc->priority=priority;
 			release_spinlock(&(ProcessQueues.qlock));
-
 	//	cprintf("55\n");
 	//	acquire_spinlock(&(ProcessQueues.qlock));
 	//	proc->priority=priority;
@@ -776,7 +775,7 @@ void env_set_priority(int envID, int priority)
 	//	//LIST_INSERT_TAIL(&(ProcessQueues.env_ready_queues[proc->priority]),proc);
 	//	release_spinlock(&(ProcessQueues.qlock));
 		}
-		sched_print_all();
+//		sched_print_all();
 		//cprintf("%d\n",proc->env_status);
 
 
