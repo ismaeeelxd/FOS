@@ -123,8 +123,8 @@ _main(void)
 	int correctMax = quicksortedArr[last];
 	int correctMed = quicksortedArr[middle];
 	//cprintf("Array is correctly sorted\n");
-	//cprintf("mean = %d, var = %d\nmin = %d, max = %d, med = %d\n", *mean, *var, *min, *max, *med);
-	//cprintf("mean = %d, var = %d\nmin = %d, max = %d, med = %d\n", correctMean, correctVar, correctMin, correctMax, correctMed);
+	cprintf("mean = %d, var = %d\nmin = %d, max = %d, med = %d\n", *mean, *var, *min, *max, *med);
+	cprintf("mean = %d, var = %d\nmin = %d, max = %d, med = %d\n", correctMean, correctVar, correctMin, correctMax, correctMed);
 
 	if(*mean != correctMean || *var != correctVar|| *min != correctMin || *max != correctMax || *med != correctMed)
 		panic("The array STATS are NOT calculated correctly") ;

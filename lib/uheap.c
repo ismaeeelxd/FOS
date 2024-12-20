@@ -29,7 +29,7 @@ void* malloc(uint32 size)
 //	return NULL;
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
 	//to check the current strategy
-	cprintf("malloc is called\n");
+//	cprintf("malloc is called\n");
 	  if(!sys_isUHeapPlacementStrategyFIRSTFIT())
 	        return NULL;
 	     if(size<=DYN_ALLOC_MAX_BLOCK_SIZE){

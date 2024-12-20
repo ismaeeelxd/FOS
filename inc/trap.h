@@ -24,7 +24,6 @@
 #define T_MCHK      18		// machine check
 #define T_SIMDERR   19		// SIMD floating point error
 
-
 // These are arbitrarily chosen, but with care not to overlap
 // processor defined exceptions or interrupt vectors.
 #define T_SYSCALL   48		// system call
@@ -39,7 +38,7 @@ struct PushRegs {
 	uint32 reg_edi;
 	uint32 reg_esi;
 	uint32 reg_ebp;
-	uint32 reg_oesp;	/* Useless */
+	uint32 reg_oesp; /* Useless */
 	uint32 reg_ebx;
 	uint32 reg_edx;
 	uint32 reg_ecx;
@@ -65,7 +64,6 @@ struct Trapframe {
 	uint16 tf_ss;
 	uint16 tf_padding4;
 };
-
 
 #endif /* !__ASSEMBLER__ */
 

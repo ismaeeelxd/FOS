@@ -191,7 +191,7 @@ void fault_handler(struct Trapframe *tf) {
 			//TODO: [PROJECT'24.MS2 - #08] [2] FAULT HANDLER I - Check for invalid pointers
 			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 			//your code is here
-				int AIARM;
+			int AIARM;
 			AIARM = pt_get_page_permissions(faulted_env->env_page_directory,
 					fault_va);
 
@@ -275,7 +275,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 	int iWS =faulted_env->page_last_WS_index;
 	uint32 wsSize = env_page_ws_get_size(faulted_env);
 #endif
-	cprintf("faultedva %p\n", fault_va);
+//	cprintf("faultedva %p\n", fault_va);
 	if (wsSize < (faulted_env->page_WS_max_size)) {
 //		cprintf("palcement size: %d\n", wsSize);
 //		cprintf("faultedva %p\n", fault_va);
@@ -309,97 +309,139 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 		}
 
 	} else {
-//		cprintf("repalcement\n");
-		struct WorkingSetElement *victim = faulted_env->page_last_WS_element;
+
+		struct WorkingSetElement *ptr = faulted_env->page_last_WS_element;
 		bool modified = 0;
-		int temp=page_WS_max_sweeps;
 		if (page_WS_max_sweeps < 0) {
-			temp = 0 - page_WS_max_sweeps;
+//			cprintf("MODIFIED VERSION IS ON \n");
+			page_WS_max_sweeps = 0-page_WS_max_sweeps;
 			modified = 1;
-//			cprintf("MODIFIED VERSION ON\n");
 		}
-		uint32 perms;
-		//env_page_ws_print(faulted_env);
-		while (1 == 1) {
-			perms = pt_get_page_permissions(faulted_env->env_page_directory,
-					victim->virtual_address);
-			victim->sweeps_counter++;
+//		cprintf("************* BEFORE ****************\n");
+//		env_page_ws_print(faulted_env);
+		uint32 minRemSweeps = 1e6;
+
+		struct WorkingSetElement *foundVictim = LIST_FIRST(
+				&faulted_env->page_WS_list);
+		for (int i = 0; i < LIST_SIZE(&faulted_env->page_WS_list); ++i) {
+			uint32 perms = pt_get_page_permissions(faulted_env->env_page_directory,
+					ptr->virtual_address);
+			uint32 max_sweeps = -10;
+
+			if(((perms & PERM_MODIFIED) && modified)){
+//				cprintf("MAX SWEEPS SHOULD BE + 1\n");
+				max_sweeps = page_WS_max_sweeps + 1;
+			} else
+				max_sweeps = page_WS_max_sweeps;
+
 
 			if (perms & PERM_USED) {
-				pt_set_page_permissions(faulted_env->env_page_directory,
-						victim->virtual_address, 0, PERM_USED);
-				victim->sweeps_counter = 0;
-				victim = LIST_NEXT(victim);
-				if (victim == NULL) {
-					victim = LIST_FIRST(&faulted_env->page_WS_list);
+				uint32 remaining_sweeps = max_sweeps + 1;
+//				cprintf("max_sweeps: %d\n",max_sweeps);
+//				cprintf("rem sweeps %d\n", remaining_sweeps);
+				if (remaining_sweeps < minRemSweeps) {
+					foundVictim = ptr;
+					minRemSweeps = remaining_sweeps;
 				}
+
+				ptr = !(LIST_NEXT(ptr)) ?
+						LIST_FIRST(&faulted_env->page_WS_list) : LIST_NEXT(ptr);
 
 				continue;
 			}
-			if (victim->sweeps_counter == temp) {
-				     // 5 wasl 5 modfied
-				if ((perms & PERM_MODIFIED) && modified) {
-					victim = LIST_NEXT(victim);
-					if (victim == NULL) {
-						victim = LIST_FIRST(&faulted_env->page_WS_list);
-					}
-					continue;
-				}
-				break;
+//			cprintf("max_sweeps: %d\n",max_sweeps);
+			uint32 remaining_sweeps = max_sweeps - ptr->sweeps_counter;
+//			cprintf("rem sweeps %d\n", remaining_sweeps);
+			if (remaining_sweeps < minRemSweeps) {
+				foundVictim = ptr;
+				minRemSweeps = remaining_sweeps;
 			}
 
-			if (victim->sweeps_counter == temp + 1) {
-				break;
-			}
+			ptr = !(LIST_NEXT(ptr)) ?
+					LIST_FIRST(&faulted_env->page_WS_list) : LIST_NEXT(ptr);
 
-			victim = LIST_NEXT(victim);
-			if (victim == NULL) {
-				victim = LIST_FIRST(&faulted_env->page_WS_list);
-			}
 		}
+		bool victim = 0;
+		ptr = faulted_env->page_last_WS_element;
+		for (int i = 0; i < wsSize; ++i) {
+			uint32 perms = pt_get_page_permissions(faulted_env->env_page_directory,
+					ptr->virtual_address);
+			if (ptr == foundVictim) {
+				victim = 1;
+				ptr = !(LIST_NEXT(ptr)) ?
+						LIST_FIRST(&faulted_env->page_WS_list) : LIST_NEXT(ptr);
+				if (minRemSweeps == 1)
+					break;
+				continue;
+			}
+			if (!victim) {
+				if (perms & PERM_USED) {
+					ptr->sweeps_counter = minRemSweeps - 1;
+					pt_set_page_permissions(faulted_env->env_page_directory,
+							ptr->virtual_address, 0, PERM_USED);
+				} else {
+					ptr->sweeps_counter += minRemSweeps;
+				}
+			} else {
+				if (perms & PERM_USED) {
+					pt_set_page_permissions(faulted_env->env_page_directory,
+							ptr->virtual_address, 0, PERM_USED);
 
-		uint32 permissions = pt_get_page_permissions(
-				faulted_env->env_page_directory, victim->virtual_address);
+					ptr->sweeps_counter = minRemSweeps - 2;
+				} else {
+					ptr->sweeps_counter += minRemSweeps - 1;
+				}
+			}
+
+			ptr = !(LIST_NEXT(ptr)) ?
+					LIST_FIRST(&faulted_env->page_WS_list) : LIST_NEXT(ptr);
+
+		}
+//		cprintf("*************AFTER ADJUSTING SWEEP COUNTERS***************\n");
+//		env_page_ws_print(faulted_env);
+
 		uint32 *ptr_page_table = NULL;
-		get_page_table(faulted_env->env_page_directory, victim->virtual_address,
-				&ptr_page_table);
+		get_page_table(faulted_env->env_page_directory,
+				foundVictim->virtual_address, &ptr_page_table);
 
 		struct FrameInfo *ptr_frame_info = get_frame_info(
-				faulted_env->env_page_directory, victim->virtual_address,
+				faulted_env->env_page_directory, foundVictim->virtual_address,
 				&ptr_page_table);
-		if ((permissions & PERM_MODIFIED) == PERM_MODIFIED) {
+		uint32 perms = pt_get_page_permissions(faulted_env->env_page_directory,
+				foundVictim->virtual_address);
 
-			pf_update_env_page(faulted_env, victim->virtual_address,
+		if (perms & PERM_MODIFIED) {
+			pf_update_env_page(faulted_env, foundVictim->virtual_address,
 					ptr_frame_info);
 		}
+
 		map_frame(faulted_env->env_page_directory, ptr_frame_info, fault_va,
 		PERM_AVAILABLE | PERM_PRESENT | PERM_USED | PERM_USER | PERM_WRITEABLE);
-		unmap_frame(faulted_env->env_page_directory, victim->virtual_address);
+		unmap_frame(faulted_env->env_page_directory,
+				foundVictim->virtual_address);
 
-		int page_file_status = pf_read_env_page(faulted_env, (void *) fault_va);
-		if (page_file_status == E_PAGE_NOT_EXIST_IN_PF) {
+		if (pf_read_env_page(faulted_env,
+				(void *) fault_va) == E_PAGE_NOT_EXIST_IN_PF) {
 			if ((fault_va >= USTACKBOTTOM && fault_va <= USTACKTOP)
 					|| (fault_va >= USER_HEAP_START && fault_va <= USER_HEAP_MAX)) {
+				// Valid area
 			} else {
-				cprintf("rana\n");
 				sched_exit_env(faulted_env->env_id);
 			}
 		}
+
 		ptr_frame_info->vir_add = fault_va;
-		victim->virtual_address = fault_va;
-		victim->sweeps_counter = 0;
-		if (!LIST_NEXT(victim)) {
-			faulted_env->page_last_WS_element = LIST_FIRST(
-					&faulted_env->page_WS_list);
-		} else
-			faulted_env->page_last_WS_element = LIST_NEXT(victim);
+		foundVictim->virtual_address = fault_va;
+		foundVictim->sweeps_counter = 0;
+		faulted_env->page_last_WS_element =
+		LIST_NEXT(foundVictim) ?
+				LIST_NEXT(foundVictim) : LIST_FIRST(&faulted_env->page_WS_list);
 
+//		cprintf("*************AFTER EVICTING***************\n");
+		env_page_ws_print(faulted_env);
+		if(modified)
+			page_WS_max_sweeps = 0 - page_WS_max_sweeps;
 	}
-//	cprintf("after/********************************************\n");
-//	env_page_ws_print(faulted_env);
-
-
-
 }
 
 void __page_fault_handler_with_buffering(struct Env * curenv, uint32 fault_va) {

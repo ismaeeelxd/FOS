@@ -237,6 +237,8 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	                if (e->page_last_WS_element == ptr_WS_element)
 	                {
 	                    e->page_last_WS_element = LIST_NEXT(ptr_WS_element);
+	                    if(!e->page_last_WS_element)
+	                    	e->page_last_WS_element = LIST_FIRST(&e->page_WS_list);
 	                }
 	                LIST_REMOVE(&(e->page_WS_list), ptr_WS_element);
 
