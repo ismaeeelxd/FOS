@@ -706,7 +706,7 @@ void env_set_priority(int envID, int priority)
 	//Get the process of the given ID
 	struct Env* proc ;
 	envid2env(envID, &proc, 0);
-
+	proc->startticks=timer_ticks();
 	//Your code is here
 	//Comment the following line
 	//panic("Not implemented yet");
@@ -724,7 +724,7 @@ void env_set_priority(int envID, int priority)
 	//
 	//	}
 	//	sched_print_all();
-		sched_print_all();
+	//	sched_print_all();
 		if(proc==NULL)
 		{
 			 return;
@@ -777,7 +777,7 @@ void env_set_priority(int envID, int priority)
 	//	release_spinlock(&(ProcessQueues.qlock));
 		}
 		sched_print_all();
-		cprintf("%d\n",proc->env_status);
+		//cprintf("%d\n",proc->env_status);
 
 
 
