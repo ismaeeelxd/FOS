@@ -428,9 +428,10 @@ void sys_signal(struct semaphore* sem) {
 
 		struct Env* proc = dequeue(&(sem->semdata->queue));
 //		cprintf("3mlt dequeue fe signal\n");
-		proc->env_status = ENV_READY;
+//		proc->env_status = ENV_READY;
 		acquire_spinlock(&ProcessQueues.qlock);
-		enqueue(ProcessQueues.env_ready_queues, proc);
+//		enqueue(ProcessQueues.env_ready_queues, proc);
+		sched_insert_ready(proc);
 		release_spinlock(&ProcessQueues.qlock);
 //		cprintf("3mlt enqueue fe signal\n");
 	}

@@ -59,6 +59,7 @@ _main(void)
 
 	while(1==1)
 	{
+
 		int custId;
 		//wait for a customer
 		wait_semaphore(cust_ready);
@@ -160,5 +161,6 @@ _main(void)
 
 		//signal the clerk
 		signal_semaphore(clerk);
+
 	}
 }
